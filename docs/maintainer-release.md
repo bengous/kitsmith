@@ -56,6 +56,22 @@ Update the repository Bun pin, generated project Bun defaults, and @types/bun ba
 Prepare the 0.3.2 changelog entry for the local release gate.
 ```
 
+## GitHub Integration Policy
+
+`main` uses GitHub rulesets as the human approval boundary. Changes land through pull requests,
+with linear history enforced and merge commits disabled. Squash merge is the default for one
+coherent change; rebase merge is reserved for a deliberately curated commit series where every
+commit is useful on `main`.
+
+Agents may create branches, open pull requests, run validation, and perform read-only reviews.
+Agents must not merge pull requests, bypass repository rules, publish to npm, create or push
+release tags, or push `main` unless the maintainer explicitly asks for that side effect in the
+current task.
+
+Commit signatures are optional on `main`. Release trust is anchored by signed `v*` tags. Release
+tags must be immutable: never move or delete a published `v*` tag; publish a new patch release
+instead.
+
 ## Inspect Release State
 
 Run the automated local preparation gate before asking for publish approval:
@@ -118,10 +134,11 @@ After `bun run release:prepare` passes and the release has explicit human approv
 
 ```bash
 npm publish --access public
-git tag -m "Release 0.3.0" v0.3.0
-git push origin main
+git tag -s v0.3.0 -m "Release 0.3.0"
+git tag -v v0.3.0
 git push origin v0.3.0
 npm view kitsmith version dist-tags --json
+git ls-remote --tags origin 'refs/tags/v0.3.0*'
 ```
 
 If npm requires 2FA, rerun publish with the current OTP:

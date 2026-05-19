@@ -47,7 +47,7 @@ It is a starting point that makes the easy mistakes harder, keeps conventions vi
 Run without installing globally:
 
 ```bash
-bunx kitsmith@0.3.0 --help
+bunx kitsmith@latest --help
 ```
 
 Bun is required. Install it from the [official Bun website](https://bun.com/) if it is not already available. The published CLI uses a Bun shebang and is not a Node-only executable.
@@ -57,7 +57,7 @@ Note: `npx kitsmith` works only if Bun is installed and available in `PATH`.
 ## Start a new project
 
 ```bash
-bunx kitsmith@0.3.0 my-app --yes
+bunx kitsmith@latest my-app --yes
 ```
 
 ## Adopt an existing project
@@ -65,7 +65,7 @@ bunx kitsmith@0.3.0 my-app --yes
 Apply the `kitsmith` baseline to an existing Bun/TypeScript project.
 
 ```bash
-bunx kitsmith@0.3.0 adopt . --apply --yes
+bunx kitsmith@latest adopt . --apply --yes
 ```
 
 Adoption copies OXLint rules as warnings by default in `--yes` mode, so an existing
@@ -78,7 +78,7 @@ projects. Existing commit history is not rewritten, but future commits are check
 Preview adoption changes without writing:
 
 ```bash
-bunx kitsmith@0.3.0 adopt .
+bunx kitsmith@latest adopt .
 ```
 
 ## CLI Options

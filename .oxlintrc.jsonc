@@ -138,6 +138,8 @@
     "unicorn/prefer-import-meta-properties": "error",
     "unicorn/no-useless-iterator-to-array": "warn",
     "eslint/object-shorthand": "error",
+    "eslint/prefer-arrow-callback": "error",
+    "eslint/no-implicit-globals": "error",
   },
   "ignorePatterns": [
     "!src/**",

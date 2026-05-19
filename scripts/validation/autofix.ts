@@ -7,12 +7,12 @@ const SPAWN_OPTS = {
   ...(process.platform === "win32" ? { windowsHide: true } : {}),
 };
 
-function run(command: string[]): void {
+const run = (command: string[]): void => {
   const proc = Bun.spawnSync(command, SPAWN_OPTS);
   if (proc.exitCode !== 0) {
     process.exit(proc.exitCode);
   }
-}
+};
 
 run([
   process.execPath,

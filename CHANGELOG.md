@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.1 - 2026-05-19
+
+### Fixed
+
+- Update the quality-tooling baseline: `jscpd` 4.2.2, `knip` 6.14.1,
+  `oxfmt` 0.50.0, and `oxlint` 1.65.0.
+- Enable newly available Oxlint 1.65 rules for callback shape, implicit globals,
+  and generated frontend accessibility coverage.
+
 ## 0.4.0 - 2026-05-19
 
 ### Added

@@ -4,8 +4,8 @@
 
 ### Fixed
 
-- Update the quality-tooling baseline: `jscpd` 4.2.3, `knip` 6.14.1,
-  `oxfmt` 0.51.0, and `oxlint` 1.66.0.
+- Update the quality-tooling baseline: `jscpd` 4.2.2, `knip` 6.14.1,
+  `oxfmt` 0.50.0, and `oxlint` 1.65.0.
 
 ## 0.4.0 - 2026-05-19
 

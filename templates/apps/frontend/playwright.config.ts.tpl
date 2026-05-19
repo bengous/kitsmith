@@ -22,7 +22,7 @@ export default defineConfig({
   webServer: {
     command: `bun run dev -- --host 127.0.0.1 --port ${port} --strictPort`,
     url: baseURL,
-    reuseExistingServer: !process.env["CI"],
+    reuseExistingServer: process.env["PLAYWRIGHT_REUSE_SERVER"] === "true",
     timeout: 120_000,
   },
   projects: [

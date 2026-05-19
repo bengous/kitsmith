@@ -167,11 +167,11 @@ function rootToolingTemplateValues(contract: GeneratedProjectContract): Record<s
     ROOT_LINT_PATHS: contract.rootTooling.lintPaths.join(" "),
     ROOT_ARCH_PATHS: contract.rootTooling.archPaths.join(" "),
     ROOT_FORMAT_GLOBS: contract.rootTooling.formatGlobs.join(" "),
-    TSCONFIG_INCLUDE: quoteArray(contract.rootTooling.tsconfigInclude),
+    TSCONFIG_INCLUDE: jsonLines(contract.rootTooling.tsconfigInclude, "    "),
     BACKEND_LEFTHOOK_GLOB: lefthookGlobLines(rootLefthookExtraGlobs),
     CODEX_LEFTHOOK_GLOB: "",
-    KNIP_ROOT_ENTRY: quoteArray(contract.rootTooling.knipRootEntry),
-    KNIP_ROOT_PROJECT: quoteArray(contract.rootTooling.knipRootProject),
+    KNIP_ROOT_ENTRY: jsonLines(contract.rootTooling.knipRootEntry, "        "),
+    KNIP_ROOT_PROJECT: jsonLines(contract.rootTooling.knipRootProject, "        "),
   };
 }
 

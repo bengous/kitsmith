@@ -6,7 +6,7 @@ matcher = "^Bash$"
 
 [[hooks.PreToolUse.hooks]]
 type = "command"
-command = 'bun "$(git rev-parse --show-toplevel)/.codex/hooks/guard-destructive.ts"'
+command = 'bun .codex/hooks/guard-destructive.ts'
 timeout = 10
 statusMessage = "Checking destructive commands"
 
@@ -15,7 +15,7 @@ matcher = "^(apply_patch|Edit|Write|MultiEdit)$"
 
 [[hooks.PreToolUse.hooks]]
 type = "command"
-command = 'bun "$(git rev-parse --show-toplevel)/.codex/hooks/guard-edit-paths.ts"'
+command = 'bun .codex/hooks/guard-edit-paths.ts'
 timeout = 10
 statusMessage = "Checking edited paths"
 
@@ -24,7 +24,7 @@ matcher = "^(apply_patch|Edit|Write|MultiEdit)$"
 
 [[hooks.PostToolUse.hooks]]
 type = "command"
-command = 'bun "$(git rev-parse --show-toplevel)/.codex/hooks/post-edit-quality.ts"'
+command = 'bun .codex/hooks/post-edit-quality.ts'
 timeout = 90
 statusMessage = "Formatting and linting edited files"
 
@@ -32,6 +32,6 @@ statusMessage = "Formatting and linting edited files"
 
 [[hooks.Stop.hooks]]
 type = "command"
-command = 'bun "$(git rev-parse --show-toplevel)/.codex/hooks/stop-validate.ts"'
+command = 'bun .codex/hooks/stop-validate.ts'
 timeout = 240
 statusMessage = "Running Codex validation"

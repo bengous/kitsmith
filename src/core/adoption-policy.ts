@@ -24,6 +24,8 @@ const TEMPLATE_CREATE_REASONS: Readonly<Record<string, string>> = {
   "CLAUDE.md": "create Claude guidance",
   ".claude/rules/project-conventions.md": "create Kitsmith Claude project convention rule",
   ".claude/rules/frontend-conventions.md": "create Kitsmith Claude frontend convention rule",
+  ".claude/rules/source-code.md": "create Kitsmith Claude source code convention rule",
+  ".claude/rules/frontend-code.md": "create Kitsmith Claude frontend convention rule",
   "apps/frontend/package.json": "create TanStack frontend package",
   "apps/frontend/index.html": "create TanStack frontend entry HTML",
   "apps/frontend/vite.config.ts": "create TanStack frontend Vite config",

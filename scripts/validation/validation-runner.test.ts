@@ -6,7 +6,7 @@ import { join } from "node:path";
 import {
   resolveValidationStepCommand,
   runGeneratedValidationStep,
-} from "../../template-sources/base/scripts/validation/validation-runner.ts";
+} from "../../template-sources/base/scripts/validation/internal/validation-runner.ts";
 import { summarizeValidationResults } from "./validation-runner.ts";
 
 function result(step: string, exit: number): ValidationResult {
@@ -49,6 +49,7 @@ describe("generated validation runner command resolution", () => {
     try {
       mkdirSync(join(dir, "src"), { recursive: true });
       mkdirSync(join(dir, "apps/frontend"), { recursive: true });
+      mkdirSync(join(dir, ".agents/scripts/hooks"), { recursive: true });
       mkdirSync(join(dir, ".codex/hooks"), { recursive: true });
       mkdirSync(join(dir, ".claude/hooks"), { recursive: true });
       writeFileSync(join(dir, "apps/frontend/package.json"), "{}");
@@ -59,7 +60,15 @@ describe("generated validation runner command resolution", () => {
         sequence: [
           { command: [process.execPath, "test", "./src"] },
           { cwd: "apps/frontend", command: [process.execPath, "run", "--silent", "test"] },
-          { command: [process.execPath, "test", "./.codex/hooks", "./.claude/hooks"] },
+          {
+            command: [
+              process.execPath,
+              "test",
+              "./.codex/hooks",
+              "./.claude/hooks",
+              "./.agents/scripts/hooks",
+            ],
+          },
         ],
       });
     } finally {
@@ -119,6 +128,7 @@ describe("generated validation runner command resolution", () => {
     try {
       mkdirSync(join(dir, "src"), { recursive: true });
       mkdirSync(join(dir, "scripts"), { recursive: true });
+      mkdirSync(join(dir, ".agents/scripts/hooks"), { recursive: true });
       mkdirSync(join(dir, ".codex/hooks"), { recursive: true });
       mkdirSync(join(dir, ".claude/hooks"), { recursive: true });
 
@@ -130,9 +140,13 @@ describe("generated validation runner command resolution", () => {
         "--format=unix",
         "src/",
         "scripts/",
+        ".agents/scripts/hooks/",
         ".codex/hooks/",
         ".claude/hooks/",
       ]);
+      expect(resolveValidationStepCommand("format:check", dir)?.command).toContain(
+        ".agents/scripts/hooks/**/*.{ts,tsx,js,jsx,mjs}",
+      );
       expect(resolveValidationStepCommand("format:check", dir)?.command).toContain(
         ".codex/hooks/**/*.{ts,tsx,js,jsx,mjs}",
       );
@@ -232,8 +246,8 @@ describe("generated validation callers", () => {
     }
   });
 
-  test("AI Stop validation does not call hidden base leaves as package scripts", () => {
-    const content = readFileSync(join(root, "ai/scripts/validation/validate-on-stop.ts"), "utf8");
+  test("stop validation does not call hidden base leaves as package scripts", () => {
+    const content = readFileSync(join(root, "base/scripts/validation/validate-on-stop.ts"), "utf8");
 
     expect(content).toContain('runGeneratedStep("typecheck", projectRoot, errors)');
     expect(content).toContain('runGeneratedStep("test", projectRoot, errors)');

@@ -126,6 +126,7 @@ export function classifyRoutingPath(
   }
   if (
     normalized.startsWith("scripts/") ||
+    normalized.startsWith(".agents/scripts/hooks/") ||
     normalized.startsWith(".codex/hooks/") ||
     normalized.startsWith(".claude/hooks/")
   ) {
@@ -190,7 +191,11 @@ export function resolveQualityWorkspace(
   if (normalized.startsWith("src/")) {
     return context.presence.backend ? ROOT_WORKSPACE : null;
   }
-  if (normalized.startsWith("scripts/") || normalized.startsWith(".claude/hooks/")) {
+  if (
+    normalized.startsWith("scripts/") ||
+    normalized.startsWith(".agents/scripts/hooks/") ||
+    normalized.startsWith(".claude/hooks/")
+  ) {
     return ROOT_WORKSPACE;
   }
   if (normalized.startsWith(".codex/hooks/")) {

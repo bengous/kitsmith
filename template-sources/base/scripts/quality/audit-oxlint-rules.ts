@@ -29,7 +29,13 @@ type ParsedConfigJson = {
 
 const PROJECT_ROOT = process.cwd();
 const CONFIG_PATH = ".oxlintrc.jsonc";
-const SCAN_PATHS = ["src/", "scripts/"];
+const SCAN_PATHS = [
+  "src/",
+  "scripts/",
+  ".agents/scripts/hooks/",
+  ".codex/hooks/",
+  ".claude/hooks/",
+];
 const OXLINT_BIN = join(
   PROJECT_ROOT,
   "node_modules",

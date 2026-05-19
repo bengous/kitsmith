@@ -1,7 +1,10 @@
 {
 	"version": 2,
 	"generated": [
+		".agents/scripts/hooks/AGENTS.md",
+		".claude/hooks/AGENTS.md",
 		".claude/rules/AGENTS.md",
+		".codex/hooks/AGENTS.md",
 		"AGENTS.md",
 		"scripts/AGENTS.md",
 		"scripts/agents/AGENTS.md",
@@ -14,10 +17,25 @@
 		"templates/AGENTS.md"
 	],
 	"outputs": {
+		".agents/scripts/hooks/AGENTS.md": {
+			"kind": "layer",
+			"sourcePath": ".claude/rules/agent-hook-runtime.md",
+			"checksum": "sha256-cf809ad836065f617e2dc730abd297092155694cad84a61cdfdfef6f8fa5913e"
+		},
+		".claude/hooks/AGENTS.md": {
+			"kind": "layer",
+			"sourcePath": ".claude/rules/native-hook-wrappers.md",
+			"checksum": "sha256-35a99cc8d6458fb7b2ae6e5366db0d5e976b8a83780303e60bf6dfa05dca0af2"
+		},
 		".claude/rules/AGENTS.md": {
 			"kind": "layer",
 			"sourcePath": ".claude/rules/rules-conventions.md",
 			"checksum": "sha256-5f9c3952544bbc874047864a57ac835077dfc32020c28d12e75a8fa1c1ba772e"
+		},
+		".codex/hooks/AGENTS.md": {
+			"kind": "layer",
+			"sourcePath": ".claude/rules/native-hook-wrappers.md",
+			"checksum": "sha256-35a99cc8d6458fb7b2ae6e5366db0d5e976b8a83780303e60bf6dfa05dca0af2"
 		},
 		"AGENTS.md": {
 			"kind": "root",
@@ -36,8 +54,8 @@
 		},
 		"scripts/quality/AGENTS.md": {
 			"kind": "layer",
-			"sourcePath": ".claude/rules/repo-automation-scripts.md",
-			"checksum": "sha256-18c9a3dbd19a26352b5a87b18ee0e1fa1749650c6eb1063e26a3428301aca397"
+			"sourcePath": ".claude/rules/validation-tooling.md",
+			"checksum": "sha256-928836273c1ab2a237137ae99efc7aab856b85ab97fe1c91476289a782cfa4a0"
 		},
 		"scripts/setup/AGENTS.md": {
 			"kind": "layer",
@@ -51,8 +69,8 @@
 		},
 		"scripts/validation/AGENTS.md": {
 			"kind": "layer",
-			"sourcePath": ".claude/rules/validation-scripts.md",
-			"checksum": "sha256-963523256ffce47c400cd39af2d418815a6eaf4bd06e2f5923901994d1b1dae3"
+			"sourcePath": ".claude/rules/validation-tooling.md",
+			"checksum": "sha256-77b8ec570f1e453791e03319f761e9c763cc49e4f10b5d4378ccd57a957486aa"
 		},
 		"src/AGENTS.md": {
 			"kind": "layer",
@@ -62,7 +80,7 @@
 		"template-sources/AGENTS.md": {
 			"kind": "layer",
 			"sourcePath": ".claude/rules/product-architecture.md",
-			"checksum": "sha256-ec47c6a44e909ba130d27c443caba964969a468c04ef9af2a57178c945cf9896"
+			"checksum": "sha256-4270c314629e023b955525ad938a6613f07879ae53085e5136900ec25cb5b420"
 		},
 		"templates/AGENTS.md": {
 			"kind": "layer",
@@ -71,6 +89,9 @@
 		}
 	},
 	"sources": {
+		".claude/rules/agent-hook-runtime.md": {
+			"checksum": "sha256-c7ca1f0e029b9d3a127f45736fa1d03d9fad3b6bb6a0dbf62a34799d4b59c99e"
+		},
 		".claude/rules/agents-sync-script.md": {
 			"checksum": "sha256-1e40bfc2ba6c6b157df177433959bb7f2fb4bcc7383709aaeb94823eaea724df"
 		},
@@ -80,6 +101,9 @@
 		".claude/rules/generated-project-contract.md": {
 			"checksum": "sha256-6e5f1aa7229e1045ab511440cbedb44ddd8476b7a1396faa35295d67c20a0bc3"
 		},
+		".claude/rules/native-hook-wrappers.md": {
+			"checksum": "sha256-a1f16d16e2c504dfa680f4e7293baea9105c790e932b33658309635b45b5f9e6"
+		},
 		".claude/rules/pragmatic-functional-style.md": {
 			"checksum": "sha256-69326c959f5c0775613f1f3f757a2181c0ef179295c0647e32a534a133ff73fa"
 		},
@@ -87,7 +111,7 @@
 			"checksum": "sha256-97e7b64049411b0dff27a882ed5d182aba525c65b11507ece3ed550a6cdef012"
 		},
 		".claude/rules/preset-sources-layer.md": {
-			"checksum": "sha256-e080a88f95c7bcfd4a56afd5354050ef03dc791978a69a162304a5ff947a2fc7"
+			"checksum": "sha256-a80bedde10fe2ed71c2f381acd497fbac0522e7bd06e3c1fddaa8ee2ff2f6316"
 		},
 		".claude/rules/preset-topology.md": {
 			"checksum": "sha256-6e476c6182cf5929b4f62a4883890ab55b8b736a5f5b46f5d25fbb6b435e7b20"
@@ -112,6 +136,9 @@
 		},
 		".claude/rules/validation-scripts.md": {
 			"checksum": "sha256-703b3d25a930da031f406c503d79d1e25c88becdb5c7045081ed115b389a57aa"
+		},
+		".claude/rules/validation-tooling.md": {
+			"checksum": "sha256-c6604b30f1d082af30dcfc71edb5a8ad4f4c83432c025e366f197c1ce40183db"
 		},
 		"CLAUDE.md": {
 			"checksum": "sha256-7215a129f49fa1afdbc96232786d71f85031f4f291eb103d063fe873a4b40ab6"

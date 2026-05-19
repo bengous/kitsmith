@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" && bun scripts/validation/format-and-lint.ts",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && bun .claude/hooks/post-edit-quality.ts",
             "timeout": 90,
             "statusMessage": "Formatting and linting..."
           }
@@ -31,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" && bun scripts/validation/validate-on-stop.ts",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && bun .claude/hooks/stop-validate.ts",
             "timeout": 240,
             "statusMessage": "Scope-aware validation..."
           }

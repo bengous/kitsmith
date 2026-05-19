@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.4.0 - 2026-05-19
+
+### Added
+
+- Generate the shared agent hook runtime under `.agents/scripts/hooks` with
+  Codex, Claude, and Pi adapter surfaces.
+- Add generated validation policy shared by human commands, Git hooks, and agent
+  stop hooks.
+- Add frontend-specific agent guidance for generated TanStack workspaces.
+- Add a parent tooling sync/check rail so Kitsmith can dogfood generated agent
+  tooling without replacing parent-only repository policy.
+
+### Changed
+
+- Keep native Codex and Claude hook wrappers thin while routing hook behavior
+  through the shared runtime.
+- Split generated validation tooling into public entrypoints, `internal/`
+  helpers, and reusable `shared/` quality policy.
+- Keep generated root agent context project-owned and stop generating a default
+  project `README.md`.
+
+### Fixed
+
+- Block agent hooks with actionable feedback when hook payloads are invalid or
+  local quality binaries are missing, instead of crashing the hook process.
+- Keep AI hook-only validation helpers out of base generated projects.
+- Remove a stale Pi TODO preset entry from generated AI manifests.
+- Preserve parent-only lint severities and ignored artifact paths when syncing
+  Kitsmith's dogfooded tooling.
+
 ## 0.3.2 - 2026-05-17
 
 ### Changed

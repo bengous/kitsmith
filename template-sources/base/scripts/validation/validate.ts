@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 
-import type { ValidationPlan } from "./validation-plan.ts";
+import type { ValidationPlan } from "./internal/validation-plan.ts";
 import {
   GENERATED_PROJECT_CHECK_PLAN,
   GENERATED_PROJECT_VALIDATE_PLAN,
-} from "./validation-plan.ts";
-import { executeValidationPlan } from "./validation-runner.ts";
+} from "./internal/validation-plan.ts";
+import { executeValidationPlan } from "./internal/validation-runner.ts";
 
 function selectedPlan(args: readonly string[]): ValidationPlan {
   const planIndex = args.indexOf("--plan");

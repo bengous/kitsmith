@@ -121,12 +121,17 @@ describe("describeGeneratedProject", () => {
     expect(description.generatedFileSpecs).toContainEqual({
       owner: "preset",
       presetName: "ai",
-      relativePath: ".codex/hooks/lib.ts",
+      relativePath: ".agents/scripts/hooks/core/contract.ts",
     });
     expect(description.generatedFileSpecs).toContainEqual({
       owner: "preset",
       presetName: "ai",
-      relativePath: ".claude/hooks/guard-destructive.test.ts",
+      relativePath: ".claude/rules/native-hook-wrappers.md",
+    });
+    expect(description.generatedFileSpecs).toContainEqual({
+      owner: "template",
+      templateName: ".claude/rules/source-code.md.tpl",
+      relativePath: ".claude/rules/source-code.md",
     });
     expect(description.generatedFileSpecs).toContainEqual({
       owner: "preset",
@@ -134,15 +139,23 @@ describe("describeGeneratedProject", () => {
       relativePath: ".gitkeep",
     });
     expect(description.generatedFileSpecs).toContainEqual({
-      owner: "template",
-      templateName: ".claude/rules/frontend-conventions.md.tpl",
-      relativePath: ".claude/rules/frontend-conventions.md",
+      owner: "finalize",
+      relativePath: "scripts/validation/AGENTS.md",
     });
     expect(description.generatedFileSpecs).toContainEqual({
       owner: "finalize",
       relativePath: "AGENTS.md",
     });
     expect(description.generatedFileSpecs).toContainEqual({
+      owner: "template",
+      templateName: ".claude/rules/frontend-code.md.tpl",
+      relativePath: ".claude/rules/frontend-code.md",
+    });
+    expect(description.generatedFileSpecs).toContainEqual({
+      owner: "finalize",
+      relativePath: "apps/frontend/AGENTS.md",
+    });
+    expect(description.generatedFileSpecs).not.toContainEqual({
       owner: "finalize",
       relativePath: "apps/frontend/src/AGENTS.md",
     });
@@ -153,76 +166,23 @@ describe("describeGeneratedProject", () => {
       makeOptions({ frontend: "tanstack", ai: true, effect: true }),
     );
 
-    expect(description.presetCopySpecs.map((spec) => [spec.name, spec.relativePaths])).toEqual([
-      [
-        "base",
-        [
-          "bunfig.toml",
-          ".editorconfig",
-          ".gitattributes",
-          ".gitleaks.toml",
-          ".lycheeignore",
-          ".oxlintrc.jsonc",
-          ".oxfmtrc.jsonc",
-          ".dependency-cruiser.cjs",
-          "commitlint.config.js",
-          ".jscpd.json",
-          "mise.toml",
-          "scripts/validation/detect-scope.ts",
-          "scripts/validation/commit-message.ts",
-          "scripts/validation/resolve-bin.ts",
-          "scripts/validation/routing-policy.ts",
-          "scripts/validation/typecheck-staged.ts",
-          "scripts/validation/validate-push.ts",
-          "scripts/validation/validate.ts",
-          "scripts/validation/validation-plan.ts",
-          "scripts/validation/validation-runner.ts",
-          "scripts/setup/bootstrap-git-config.ts",
-          "scripts/setup/bootstrap-prepare.ts",
-          "scripts/quality/audit-oxlint-rules.ts",
-          "scripts/quality/check-links-local.ts",
-        ],
-      ],
-      [
-        "frontend-tanstack",
-        [
-          "apps/frontend/.oxlintrc.jsonc",
-          "apps/frontend/.oxfmtrc.jsonc",
-          "apps/frontend/.dependency-cruiser.cjs",
-          "apps/frontend/.stylelintrc.json",
-          "apps/frontend/tsconfig.json",
-          "apps/frontend/tsconfig.app.json",
-          "apps/frontend/tsconfig.node.json",
-        ],
-      ],
-      [
-        "ai",
-        [
-          ".mcp.json",
-          ".codex/config.toml",
-          ".codex/hooks/guard-destructive-core.ts",
-          ".codex/hooks/guard-destructive-core.test.ts",
-          ".codex/hooks/guard-destructive.ts",
-          ".codex/hooks/guard-destructive.test.ts",
-          ".codex/hooks/guard-edit-paths.ts",
-          ".codex/hooks/lib.ts",
-          ".codex/hooks/lib.test.ts",
-          ".codex/hooks/post-edit-quality.ts",
-          ".codex/hooks/stop-validate.ts",
-          ".claude/settings.json",
-          ".claude/hooks/guard-destructive-core.ts",
-          ".claude/hooks/guard-destructive-core.test.ts",
-          ".claude/hooks/guard-destructive.ts",
-          ".claude/hooks/guard-destructive.test.ts",
-          "scripts/validation/format-and-lint.ts",
-          "scripts/validation/format-and-lint-routing.ts",
-          "scripts/validation/repo-path.ts",
-          "scripts/validation/validate-on-stop.ts",
-          "scripts/agents/sync-agents-md.ts",
-        ],
-      ],
-      ["effect", [".gitkeep"]],
-    ]);
+    const specsByName = Object.fromEntries(
+      description.presetCopySpecs.map((spec) => [spec.name, spec.relativePaths]),
+    );
+
+    expect(Object.keys(specsByName)).toEqual(["base", "frontend-tanstack", "ai", "effect"]);
+    expect(specsByName["base"]).toContain("scripts/validation/internal/validation-runner.ts");
+    expect(specsByName["base"]).toContain("scripts/validation/shared/quality-scope-policy.ts");
+    expect(specsByName["base"]).not.toContain("scripts/validation/shared/quality-workspace.ts");
+    expect(specsByName["base"]).not.toContain("scripts/validation/routing-policy.ts");
+    expect(specsByName["ai"]).toContain(".agents/scripts/hooks/core/contract.ts");
+    expect(specsByName["ai"]).toContain(".agents/scripts/hooks/adapters/pi.example.ts");
+    expect(specsByName["ai"]).toContain(".claude/rules/validation-tooling.md");
+    expect(specsByName["ai"]).toContain("scripts/validation/shared/quality-workspace.ts");
+    expect(specsByName["ai"]).toContain("scripts/validation/shared/repo-path.ts");
+    expect(specsByName["ai"]).not.toContain(".claude/rules/source-code.md");
+    expect(specsByName["ai"]).not.toContain(".codex/hooks/lib.ts");
+    expect(specsByName["effect"]).toEqual([".gitkeep"]);
     expect(description.presetCopySpecs.map((spec) => spec.sourceDir.endsWith(spec.name))).toEqual([
       true,
       true,
@@ -269,7 +229,6 @@ describe("templateFilesForContext", () => {
       ["tsconfig.json.tpl", "tsconfig.json"],
       ["knip.jsonc.tpl", "knip.jsonc"],
       ["lefthook.yml.tpl", "lefthook.yml"],
-      ["README.md.tpl", "README.md"],
       [".gitignore.tpl", ".gitignore"],
       ["src/index.ts.tpl", "src/index.ts"],
       ["src/index.test.ts.tpl", "src/index.test.ts"],
@@ -302,8 +261,12 @@ describe("templateFilesForContext", () => {
     );
     expect(files).toContainEqual(["CLAUDE.md.tpl", "CLAUDE.md"]);
     expect(files).toContainEqual([
-      ".claude/rules/frontend-conventions.md.tpl",
-      ".claude/rules/frontend-conventions.md",
+      ".claude/rules/source-code.md.tpl",
+      ".claude/rules/source-code.md",
+    ]);
+    expect(files).toContainEqual([
+      ".claude/rules/frontend-code.md.tpl",
+      ".claude/rules/frontend-code.md",
     ]);
     expect(files).toContainEqual([
       "apps/frontend/src/routes/-index.test.tsx.tpl",
@@ -314,12 +277,27 @@ describe("templateFilesForContext", () => {
       "apps/frontend/e2e/home.spec.ts",
     ]);
   });
+
+  test("omits backend source agent guidance for frontend-only projects", () => {
+    const files = templateFilesForContext(
+      buildTemplateContext(makeOptions({ backend: false, frontend: "tanstack", ai: true })),
+    );
+    expect(files).not.toContainEqual([
+      ".claude/rules/source-code.md.tpl",
+      ".claude/rules/source-code.md",
+    ]);
+    expect(files).toContainEqual([
+      ".claude/rules/frontend-code.md.tpl",
+      ".claude/rules/frontend-code.md",
+    ]);
+  });
 });
 
 describe("cleanupPathsForOptions", () => {
   test("always cleans backend native leftovers", () => {
     expect(cleanupPathsForOptions(makeOptions())).toEqual([
       "CLAUDE.md",
+      "README.md",
       "index.ts",
       "bun.lock",
       "node_modules",

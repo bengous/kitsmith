@@ -310,13 +310,14 @@ describe("buildAdoptionPlan", () => {
 
     expect(
       plan.actions.some(
-        (action) => action.kind === "create" && action.path === ".codex/hooks/lib.ts",
+        (action) =>
+          action.kind === "create" && action.path === ".agents/scripts/hooks/core/contract.ts",
       ),
     ).toBe(true);
     expect(
       plan.actions.some(
         (action) =>
-          action.kind === "create" && action.path === ".claude/hooks/guard-destructive.test.ts",
+          action.kind === "create" && action.path === ".claude/rules/native-hook-wrappers.md",
       ),
     ).toBe(true);
     expect(
@@ -459,7 +460,7 @@ describe("buildAdoptionPlan", () => {
       plan.actions.some(
         (action) =>
           action.kind === "conflict" &&
-          action.path === ".claude/rules/kitsmith-project-conventions.md" &&
+          action.path === ".claude/settings.json" &&
           action.reason.includes("Cannot create below existing non-directory path"),
       ),
     ).toBe(true);
@@ -488,9 +489,7 @@ describe("buildAdoptionPlan", () => {
       ).toBe(true);
       expect(
         plan.actions.some(
-          (action) =>
-            action.kind === "create" &&
-            action.path === ".claude/rules/kitsmith-project-conventions.md",
+          (action) => action.kind === "create" && action.path === ".claude/rules/source-code.md",
         ),
       ).toBe(true);
       expect(
@@ -498,6 +497,44 @@ describe("buildAdoptionPlan", () => {
       ).toBe(false);
     },
   );
+
+  test("rejects self-adoption of the kitsmith parent repo", async () => {
+    const dir = makeTempProject();
+    writeProjectFile(
+      dir,
+      "package.json",
+      `${JSON.stringify(
+        {
+          name: "kitsmith",
+          private: true,
+          scripts: { dev: "bun src/index.ts" },
+          devDependencies: { "@types/bun": "^1.3.8", typescript: "6.0.3" },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    writeProjectFile(dir, "tsconfig.json", "{\n}\n");
+    writeProjectFile(dir, "template-sources/manifest.json", "{}\n");
+    writeProjectFile(dir, "src/core/generated-project-contract.ts", "export {};\n");
+
+    try {
+      await buildAdoptionPlan(
+        makeOptions(dir, {
+          projectName: toProjectName("kitsmith"),
+          packageName: toExistingPackageName("kitsmith"),
+          binName: toExistingBinName("kitsmith"),
+        }),
+      );
+      throw new Error("Expected buildAdoptionPlan to reject kitsmith self-adoption");
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      if (!(error instanceof Error)) {
+        throw error;
+      }
+      expect(error.message).toContain("parent-tooling:sync");
+    }
+  });
 });
 
 describe("applyAdoptionPlan and rollbackAdoption", () => {

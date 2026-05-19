@@ -56,8 +56,8 @@ function main(): void {
   const files = collectLinkCheckFiles();
 
   if (files.length === 0) {
-    console.error("Local link checking expected README.md or docs/**/*.{md,html}, but found none.");
-    process.exit(1);
+    console.log("No README.md or docs/**/*.{md,html} found; skipping local link check.");
+    process.exit(0);
   }
 
   const versionCheck = Bun.spawnSync(["mise", "exec", "--", "lychee", "--version"], {

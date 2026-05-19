@@ -6,6 +6,7 @@ export type LivePushValidationPolicy = {
   readonly codeSteps: readonly string[];
   readonly productFormatStep: string;
   readonly productSteps: readonly string[];
+  readonly configSteps: readonly string[];
 };
 
 export type LiveStopValidationPolicy = {
@@ -16,8 +17,8 @@ export type LiveStopValidationPolicy = {
 
 export const LIVE_CHECK_PLAN: ValidationPlan = {
   defaultSteps: [
+    "parent-tooling:check",
     "agents:check",
-    "guard-destructive:check",
     "format:check",
     "lint:errors",
     "typecheck",
@@ -45,10 +46,11 @@ export const LIVE_PUSH_VALIDATION_POLICY: LivePushValidationPolicy = {
   codeSteps: ["typecheck", "lint:errors", "format:check", "lint:arch", "test"],
   productFormatStep: "format:check",
   productSteps: ["test:project-contract"],
+  configSteps: ["parent-tooling:check", "agents:check"],
 };
 
 export const LIVE_STOP_VALIDATION_POLICY: LiveStopValidationPolicy = {
   codeSteps: ["format:check", "lint:errors", "typecheck", "test"],
   productSteps: ["format:check", "test:project-contract"],
-  configSteps: ["agents:check", "guard-destructive:check"],
+  configSteps: ["parent-tooling:check", "agents:check"],
 };

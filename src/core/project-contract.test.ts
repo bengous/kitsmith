@@ -220,29 +220,6 @@ test("generated base project exposes only the public command surface", async () 
   ]);
 });
 
-test("generated base README documents the public command surface", async () => {
-  const scenario: Scenario = {
-    name: "none-plain",
-    backend: true,
-    frontend: "none",
-    ai: false,
-    effect: false,
-  };
-  const destination = await generateScenario(scenario);
-  const readme = await Bun.file(join(destination, "README.md")).text();
-
-  for (const command of ["dev", "test", "autofix", "check", "validate", "setup"]) {
-    expect(readme).toContain(`bun run ${command}`);
-  }
-
-  expect(readme).toContain("mutates files");
-  expect(readme).toContain("read-only");
-  expect(readme).not.toContain("bun run prepare");
-  expect(readme).not.toContain("lint:audit");
-  expect(readme).not.toContain("validate:scale");
-  expect(readme).not.toContain("repo:bootstrap");
-});
-
 test("generated public scripts match the exact shape and preset matrix", async () => {
   for (const scenario of scenarios) {
     const destination = await generateScenario(scenario);
@@ -257,40 +234,13 @@ test("generated public scripts match the exact shape and preset matrix", async (
   }
 });
 
-test("generated README conditionally documents preset commands", async () => {
-  for (const scenario of scenarios) {
-    const destination = await generateScenario(scenario);
-    const readme = await Bun.file(join(destination, "README.md")).text();
-
-    if (scenario.frontend === "tanstack") {
-      expect(readme).toContain("bun run build");
-      expect(readme).toContain("apps/frontend/dist");
-    } else {
-      expect(readme).not.toContain("bun run build");
-    }
-
-    if (scenario.ai) {
-      expect(readme).toContain("bun run agents:sync");
-    } else {
-      expect(readme).not.toContain("bun run agents:sync");
-    }
-
-    expect(readme).not.toContain("agents:check");
-    expect(readme).not.toContain("test:hooks");
-    expect(readme).not.toContain("effect:diagnose");
-    expect(readme).not.toContain("validate:frontend");
-  }
-});
-
 for (const scenario of scenarios) {
   test(`generated project contract: ${scenario.name}`, async () => {
     const destination = await generateScenario(scenario);
     const description = buildGeneratedProjectContract(makeOptions(destination, scenario));
 
     await assertGeneratedProjectContract(destination, description);
-    expect(await Bun.file(join(destination, "README.md")).text()).not.toContain(
-      "NATIVE BACKEND README",
-    );
+    expect(await Bun.file(join(destination, "README.md")).exists()).toBe(false);
 
     if (scenario.frontend === "tanstack") {
       expect(

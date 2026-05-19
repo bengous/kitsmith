@@ -3,8 +3,9 @@ import { readFileSync } from "node:fs";
 import { objectField, parseJsonObject } from "../../src/core/json.ts";
 import {
   GENERATED_PROJECT_CHECK_PLAN,
+  GENERATED_PROJECT_PUSH_VALIDATION_POLICY,
   GENERATED_PROJECT_VALIDATE_PLAN,
-} from "../../template-sources/base/scripts/validation/validation-plan.ts";
+} from "../../template-sources/base/scripts/validation/internal/validation-plan.ts";
 import {
   LIVE_CHECK_PLAN,
   LIVE_DEEP_PLAN,
@@ -46,8 +47,8 @@ test("live package scripts expose thin maintainer lane entrypoints", () => {
 
 test("live check plan is fast read-only and excludes deep, sandbox, and release lanes", () => {
   expect(LIVE_CHECK_PLAN.defaultSteps).toEqual([
+    "parent-tooling:check",
     "agents:check",
-    "guard-destructive:check",
     "format:check",
     "lint:errors",
     "typecheck",
@@ -62,7 +63,7 @@ test("live check plan is fast read-only and excludes deep, sandbox, and release 
 });
 
 test("live validate plan keeps live-only rails out of generated validation", () => {
-  expect(LIVE_VALIDATE_PLAN.defaultSteps).toContain("guard-destructive:check");
+  expect(LIVE_VALIDATE_PLAN.defaultSteps).toContain("parent-tooling:check");
   expect(LIVE_VALIDATE_PLAN.defaultSteps).toContain("lint:arch");
   expect(LIVE_VALIDATE_PLAN.defaultSteps).toContain("lint:audit");
   expect(LIVE_VALIDATE_PLAN.defaultSteps).not.toContain("validate:frontend");
@@ -114,9 +115,9 @@ test("live sandbox lane owns e2e, disposable install, smoke, and supply-chain ch
 
 test("copied generated validation sources use top-level type-only imports", () => {
   for (const sourcePath of [
-    "template-sources/base/scripts/validation/detect-scope.ts",
+    "template-sources/base/scripts/validation/internal/detect-scope.ts",
     "template-sources/base/scripts/validation/validate.ts",
-    "template-sources/ai/scripts/validation/format-and-lint-routing.ts",
+    "template-sources/base/scripts/validation/shared/quality-scope-policy.ts",
   ]) {
     const source = readFileSync(sourcePath, "utf8");
     expect(source).not.toMatch(/import\s*\{[^}]*\btype\s+/s);
@@ -140,6 +141,7 @@ test("live generated lane is host-safe product contract coverage", () => {
 test("live push policy keeps product contract validation explicit", () => {
   expect(LIVE_PUSH_VALIDATION_POLICY.productSteps).toContain("test:project-contract");
   expect(LIVE_PUSH_VALIDATION_POLICY.productSteps).not.toContain("validate:frontend");
+  expect(LIVE_PUSH_VALIDATION_POLICY.configSteps).toEqual(["parent-tooling:check", "agents:check"]);
   for (const forbidden of [
     "validate:deep",
     "validate:generated",
@@ -153,6 +155,7 @@ test("live push policy keeps product contract validation explicit", () => {
       ...LIVE_PUSH_VALIDATION_POLICY.codeSteps,
       LIVE_PUSH_VALIDATION_POLICY.productFormatStep,
       ...LIVE_PUSH_VALIDATION_POLICY.productSteps,
+      ...LIVE_PUSH_VALIDATION_POLICY.configSteps,
     ]).not.toContain(forbidden);
   }
 });
@@ -168,10 +171,7 @@ test("live stop policy stays targeted to check-level steps", () => {
     "format:check",
     "test:project-contract",
   ]);
-  expect(LIVE_STOP_VALIDATION_POLICY.configSteps).toEqual([
-    "agents:check",
-    "guard-destructive:check",
-  ]);
+  expect(LIVE_STOP_VALIDATION_POLICY.configSteps).toEqual(["parent-tooling:check", "agents:check"]);
 
   for (const step of [
     ...LIVE_STOP_VALIDATION_POLICY.codeSteps,
@@ -246,4 +246,8 @@ test("generated check plan is a fast read-only subset of generated validate", ()
   expect(GENERATED_PROJECT_VALIDATE_PLAN.defaultSteps).not.toContain("validate:frontend");
   expect(GENERATED_PROJECT_VALIDATE_PLAN.defaultSteps).not.toContain("release:prepare");
   expect(GENERATED_PROJECT_VALIDATE_PLAN.defaultSteps).not.toContain("validate:sandbox");
+  expect([
+    ...GENERATED_PROJECT_PUSH_VALIDATION_POLICY.codeSteps,
+    ...GENERATED_PROJECT_PUSH_VALIDATION_POLICY.frontendSteps,
+  ]).not.toContain("parent-tooling:check");
 });

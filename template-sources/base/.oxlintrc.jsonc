@@ -139,5 +139,11 @@
     "unicorn/no-useless-iterator-to-array": "warn",
     "eslint/object-shorthand": "error",
   },
-  "ignorePatterns": ["!src/**", "!scripts/**", "!.codex/hooks/**", "!.claude/hooks/**"],
+  "ignorePatterns": [
+    "!src/**",
+    "!scripts/**",
+    "!.agents/scripts/hooks/**",
+    "!.codex/hooks/**",
+    "!.claude/hooks/**",
+  ],
 }

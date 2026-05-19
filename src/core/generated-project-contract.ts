@@ -109,7 +109,13 @@ export type GeneratedProjectContract = GeneratedProjectDescription & {
   readonly frontend: FrontendContract;
 };
 
-const BASE_CLEANUP_PATHS = ["CLAUDE.md", "index.ts", "bun.lock", "node_modules"] as const;
+const BASE_CLEANUP_PATHS = [
+  "CLAUDE.md",
+  "README.md",
+  "index.ts",
+  "bun.lock",
+  "node_modules",
+] as const;
 
 const FRONTEND_CLEANUP_PATHS = [
   "apps/frontend/.cta.json",
@@ -126,7 +132,6 @@ const BASE_TEMPLATE_RENDER_SPECS: readonly TemplateRenderSpec[] = [
   { templateName: "tsconfig.json.tpl", relativePath: "tsconfig.json" },
   { templateName: "knip.jsonc.tpl", relativePath: "knip.jsonc" },
   { templateName: "lefthook.yml.tpl", relativePath: "lefthook.yml" },
-  { templateName: "README.md.tpl", relativePath: "README.md" },
   { templateName: ".gitignore.tpl", relativePath: ".gitignore" },
 ];
 
@@ -142,9 +147,19 @@ const EFFECT_BACKEND_TEMPLATE_RENDER_SPECS: readonly TemplateRenderSpec[] = [
 
 const AI_TEMPLATE_RENDER_SPECS: readonly TemplateRenderSpec[] = [
   { templateName: "CLAUDE.md.tpl", relativePath: "CLAUDE.md" },
+];
+
+const BACKEND_AI_TEMPLATE_RENDER_SPECS: readonly TemplateRenderSpec[] = [
   {
-    templateName: ".claude/rules/project-conventions.md.tpl",
-    relativePath: ".claude/rules/project-conventions.md",
+    templateName: ".claude/rules/source-code.md.tpl",
+    relativePath: ".claude/rules/source-code.md",
+  },
+];
+
+const FRONTEND_AI_TEMPLATE_RENDER_SPECS: readonly TemplateRenderSpec[] = [
+  {
+    templateName: ".claude/rules/frontend-code.md.tpl",
+    relativePath: ".claude/rules/frontend-code.md",
   },
 ];
 
@@ -191,13 +206,6 @@ const FRONTEND_TEMPLATE_RENDER_SPECS: readonly TemplateRenderSpec[] = [
   {
     templateName: "apps/frontend/src/styles.css.tpl",
     relativePath: "apps/frontend/src/styles.css",
-  },
-];
-
-const FRONTEND_AI_TEMPLATE_RENDER_SPECS: readonly TemplateRenderSpec[] = [
-  {
-    templateName: ".claude/rules/frontend-conventions.md.tpl",
-    relativePath: ".claude/rules/frontend-conventions.md",
   },
 ];
 
@@ -341,12 +349,16 @@ export function templateRenderSpecsForShape(input: ProjectShapeInput): TemplateR
     specs.push(...AI_TEMPLATE_RENDER_SPECS);
   }
 
+  if (shape.ai && shape.backend) {
+    specs.push(...BACKEND_AI_TEMPLATE_RENDER_SPECS);
+  }
+
+  if (shape.ai && shape.frontend === "tanstack") {
+    specs.push(...FRONTEND_AI_TEMPLATE_RENDER_SPECS);
+  }
+
   if (shape.frontend === "tanstack") {
     specs.push(...FRONTEND_TEMPLATE_RENDER_SPECS);
-
-    if (shape.ai) {
-      specs.push(...FRONTEND_AI_TEMPLATE_RENDER_SPECS);
-    }
   }
 
   return specs;
@@ -360,7 +372,11 @@ function finalizedFileSpecsForShape(shape: ProjectShape): GeneratedFileSpec[] {
   const specs: GeneratedFileSpec[] = [
     { owner: "finalize", relativePath: "AGENTS.md" },
     { owner: "finalize", relativePath: ".agents/agents-md-manifest.json" },
-    { owner: "finalize", relativePath: "scripts/AGENTS.md" },
+    { owner: "finalize", relativePath: ".agents/scripts/hooks/AGENTS.md" },
+    { owner: "finalize", relativePath: ".codex/hooks/AGENTS.md" },
+    { owner: "finalize", relativePath: ".claude/hooks/AGENTS.md" },
+    { owner: "finalize", relativePath: "scripts/quality/AGENTS.md" },
+    { owner: "finalize", relativePath: "scripts/validation/AGENTS.md" },
   ];
 
   if (shape.backend) {
@@ -368,7 +384,7 @@ function finalizedFileSpecsForShape(shape: ProjectShape): GeneratedFileSpec[] {
   }
 
   if (shape.frontend === "tanstack") {
-    specs.push({ owner: "finalize", relativePath: "apps/frontend/src/AGENTS.md" });
+    specs.push({ owner: "finalize", relativePath: "apps/frontend/AGENTS.md" });
   }
 
   return specs;
@@ -397,7 +413,7 @@ function generatedFileSpecsForDescription(
 }
 
 function commandInWorkspace(workspace: string, script: string): string {
-  return `bun --cwd ${workspace} run ${script}`;
+  return `bun run --cwd ${workspace} ${script}`;
 }
 
 function devCommandForContext(context: TemplateContext): string {
@@ -408,7 +424,9 @@ function testCommandForContext(context: TemplateContext): string {
   return [
     ...(context.backend ? ["bun test ./src"] : []),
     ...(context.frontend === "tanstack" ? [commandInWorkspace("apps/frontend", "test")] : []),
-    ...(context.ai ? ["bun test ./.codex/hooks ./.claude/hooks"] : []),
+    ...(context.ai
+      ? ["bun test ./.agents/scripts/hooks ./.codex/hooks ./.claude/hooks ./scripts/validation"]
+      : []),
   ].join(" && ");
 }
 
@@ -474,40 +492,60 @@ function rootToolingContractForContext(context: TemplateContext): RootToolingCon
   const lintPaths = [
     ...(context.backend ? ["src/"] : []),
     "scripts/",
-    ...(context.ai ? [".codex/hooks/", ".claude/hooks/"] : []),
+    ...(context.ai ? [".agents/scripts/hooks/", ".codex/hooks/", ".claude/hooks/"] : []),
   ];
   const archPaths = [
     ...(context.backend ? ["src"] : []),
     "scripts",
-    ...(context.ai ? ["./.codex/hooks", "./.claude/hooks"] : []),
+    ...(context.ai ? ["./.agents/scripts/hooks", "./.codex/hooks", "./.claude/hooks"] : []),
   ];
   const formatGlobs = [
     "'commitlint.config.js'",
     ...(context.backend ? ["'src/**/*.{ts,tsx,js,jsx,mjs}'"] : []),
     "'scripts/**/*.{ts,tsx,js,jsx,mjs}'",
     ...(context.ai
-      ? ["'.codex/hooks/**/*.{ts,tsx,js,jsx,mjs}'", "'.claude/hooks/**/*.{ts,tsx,js,jsx,mjs}'"]
+      ? [
+          "'.agents/scripts/hooks/**/*.{ts,tsx,js,jsx,mjs}'",
+          "'.codex/hooks/**/*.{ts,tsx,js,jsx,mjs}'",
+          "'.claude/hooks/**/*.{ts,tsx,js,jsx,mjs}'",
+        ]
       : []),
   ];
   const tsconfigInclude = [
     ...(context.backend ? ["src/**/*.ts"] : []),
     "scripts/**/*.ts",
-    ...(context.ai ? [".codex/hooks/**/*.ts", ".claude/hooks/**/*.ts"] : []),
+    ...(context.ai
+      ? [".agents/scripts/hooks/**/*.ts", ".codex/hooks/**/*.ts", ".claude/hooks/**/*.ts"]
+      : []),
   ];
   const knipRootEntry = [
     ...(context.backend ? ["src/index.ts", "src/**/*.test.ts"] : []),
-    "scripts/**/*.ts",
-    ...(context.ai ? [".claude/hooks/**/*.ts", ".codex/hooks/**/*.ts"] : []),
+    "scripts/agents/sync-agents-md.ts",
+    "scripts/quality/*.ts",
+    "scripts/setup/*.ts",
+    "scripts/validation/commit-message.ts",
+    "scripts/validation/typecheck-staged.ts",
+    "scripts/validation/validate.ts",
+    "scripts/validation/validate-on-stop.ts",
+    "scripts/validation/validate-push.ts",
+    "scripts/validation/shared/**/*.test.ts",
+    ...(context.ai
+      ? [".agents/scripts/hooks/**/*.test.ts", ".claude/hooks/**/*.ts", ".codex/hooks/**/*.ts"]
+      : []),
   ];
   const knipRootProject = [
     ...(context.backend ? ["src/**/*.ts"] : []),
     "scripts/**/*.ts",
-    ...(context.ai ? [".claude/hooks/**/*.ts", ".codex/hooks/**/*.ts"] : []),
+    ...(context.ai
+      ? [".agents/scripts/hooks/**/*.ts", ".claude/hooks/**/*.ts", ".codex/hooks/**/*.ts"]
+      : []),
   ];
   const lefthookRootGlobs = [
     "scripts/**/*.ts",
     ...(context.backend ? ["src/**/*.ts"] : []),
-    ...(context.ai ? [".codex/hooks/**/*.ts", ".claude/hooks/**/*.ts"] : []),
+    ...(context.ai
+      ? [".agents/scripts/hooks/**/*.ts", ".codex/hooks/**/*.ts", ".claude/hooks/**/*.ts"]
+      : []),
   ];
   const lefthookTypecheckGlobs = [
     ...lefthookRootGlobs,

@@ -15,6 +15,9 @@ describe("classifyFileWithWorkspace", () => {
     expect(classifyFileWithWorkspace(".codex/hooks/post-edit-quality.ts", presence)).toBe(
       "scripts",
     );
+    expect(classifyFileWithWorkspace(".agents/scripts/hooks/core/contract.ts", presence)).toBe(
+      "scripts",
+    );
     expect(classifyFileWithWorkspace(".claude/hooks/guard-destructive.ts", presence)).toBe(
       "scripts",
     );

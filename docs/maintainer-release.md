@@ -34,7 +34,27 @@ Use `--edit` when the commit needs a body:
 cog commit chore --edit "publish kitsmith 0.3.0" release
 ```
 
-Release commits should explain what changed and why the version is releasable.
+Release commits should explain the product or tooling change. Do not add meta-commentary about
+release mechanics, such as preparing the changelog, passing `release:prepare`, tagging, or publishing.
+Those facts belong in the run log or release checklist, not in the commit message.
+
+Good:
+
+```text
+fix(deps): align Bun 1.3.14 tooling baseline
+
+Update the repository Bun pin, generated project Bun defaults, and @types/bun baseline to 1.3.14.
+```
+
+Bad:
+
+```text
+fix(deps): align Bun 1.3.14 tooling baseline
+
+Update the repository Bun pin, generated project Bun defaults, and @types/bun baseline to 1.3.14.
+
+Prepare the 0.3.2 changelog entry for the local release gate.
+```
 
 ## Inspect Release State
 
@@ -84,8 +104,8 @@ that land on `main` must be changelog-quality:
 
 - the title says what changed, not just that a release happened
 - the scope names the affected product surface when useful
-- the body explains user-visible behavior, generated-project contract changes, and maintenance
-  impact
+- the body explains user-visible behavior, generated-project contract changes, or maintenance
+  impact without restating touched files or release-process steps
 - pure maintenance commits use `chore`, `docs`, `test`, or `refactor` deliberately so they can be
   included or ignored intentionally later
 

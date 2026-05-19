@@ -20,8 +20,8 @@ function addUnique(steps: string[], nextSteps: readonly string[]): void {
 export function stopValidationSteps(
   scopes: Set<Scope>,
   options: {
+    readonly hasParentToolingCheck: boolean;
     readonly hasAgentsCheck: boolean;
-    readonly hasGuardDestructiveCheck: boolean;
   },
 ): string[] {
   const steps: string[] = [];
@@ -41,8 +41,8 @@ export function stopValidationSteps(
         if (step === "agents:check") {
           return options.hasAgentsCheck;
         }
-        if (step === "guard-destructive:check") {
-          return options.hasGuardDestructiveCheck;
+        if (step === "parent-tooling:check") {
+          return options.hasParentToolingCheck;
         }
         return true;
       }),
@@ -124,8 +124,8 @@ async function main(): Promise<void> {
   const scopes = expandConfigScope(classifyScopes(codeFiles));
   const errors: string[] = [];
   const steps = stopValidationSteps(scopes, {
+    hasParentToolingCheck: await hasPackageScript(projectRoot, "parent-tooling:check"),
     hasAgentsCheck: await hasPackageScript(projectRoot, "agents:check"),
-    hasGuardDestructiveCheck: await hasPackageScript(projectRoot, "guard-destructive:check"),
   });
 
   for (const step of steps) {

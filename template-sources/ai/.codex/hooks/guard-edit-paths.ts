@@ -1,30 +1,6 @@
 #!/usr/bin/env bun
 
-import {
-  extractTouchedPaths,
-  forbiddenTouchedPaths,
-  readHookInput,
-  recordTouchedPaths,
-  repoRoot,
-} from "./lib";
+import { codexAdapter } from "../../.agents/scripts/hooks/adapters/codex.ts";
+import { runEditPathGuard } from "../../.agents/scripts/hooks/runtime/run-pre-tool-hook.ts";
 
-const input = await readHookInput();
-const paths = extractTouchedPaths(input, repoRoot(input));
-const forbidden = forbiddenTouchedPaths(paths);
-
-if (forbidden.length > 0) {
-  console.log(
-    JSON.stringify({
-      hookSpecificOutput: {
-        hookEventName: "PreToolUse",
-        permissionDecision: "deny",
-        permissionDecisionReason: `Generated files must not be edited directly: ${forbidden.join(
-          ", ",
-        )}. Edit the source file and run the matching generator.`,
-      },
-    }),
-  );
-  process.exit(0);
-}
-
-await recordTouchedPaths(input, paths);
+await runEditPathGuard(codexAdapter);

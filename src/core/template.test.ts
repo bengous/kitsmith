@@ -76,7 +76,9 @@ describe("templateValues", () => {
     expect(values["FRONTEND_SCRIPTS"]).toContain('"build"');
     expect(values["FRONTEND_SCRIPTS"]).not.toContain('"validate:frontend"');
     expect(values["BIN_BLOCK"]).toBe("");
-    expect(values["ROOT_LINT_PATHS"]).toBe("scripts/ .codex/hooks/ .claude/hooks/");
+    expect(values["ROOT_LINT_PATHS"]).toBe(
+      "scripts/ .agents/scripts/hooks/ .codex/hooks/ .claude/hooks/",
+    );
   });
 
   test("includes Effect tokens when effect is enabled", () => {
@@ -101,7 +103,7 @@ describe("templateValuesFromContract characterization", () => {
     expect(values["BIN_BLOCK"]).toBe('  "bin": {\n    "forge-backend": "./src/index.ts"\n  },\n');
     expect(values["ROOT_LINT_PATHS"]).toBe("src/ scripts/");
     expect(values["ROOT_ARCH_PATHS"]).toBe("src scripts");
-    expect(values["TSCONFIG_INCLUDE"]).toBe('"src/**/*.ts", "scripts/**/*.ts"');
+    expect(values["TSCONFIG_INCLUDE"]).toBe('    "src/**/*.ts",\n    "scripts/**/*.ts"');
     expect(values["BACKEND_LEFTHOOK_GLOB"]).toBe('        - "src/**/*.ts"\n');
   });
 
@@ -111,7 +113,7 @@ describe("templateValuesFromContract characterization", () => {
     expect(values["WORKSPACES_BLOCK"]).toBe('  "workspaces": [\n    "apps/*"\n  ],\n');
     expect(values["FRONTEND_PACKAGE_NAME"]).toBe("@forge-frontend/frontend");
     expect(values["FRONTEND_SCRIPTS"]).toContain(
-      '    "build": "bun --cwd apps/frontend run build",\n',
+      '    "build": "bun run --cwd apps/frontend build",\n',
     );
     expect(values["FRONTEND_SCRIPTS"]).not.toContain("test:e2e");
     expect(values["FRONTEND_LEFTHOOK_COMMAND"]).toContain("frontend-oxc:");
@@ -136,10 +138,10 @@ describe("renderTemplate", () => {
     const rendered = renderTemplate("package.json.tpl", frontendAiContext);
     expect(rendered).toContain('"name": "forge-frontend"');
     expect(rendered).toContain('"agents:sync"');
-    expect(rendered).toContain('"build": "bun --cwd apps/frontend run build"');
-    expect(rendered).toContain('"dev": "bun --cwd apps/frontend run dev"');
+    expect(rendered).toContain('"build": "bun run --cwd apps/frontend build"');
+    expect(rendered).toContain('"dev": "bun run --cwd apps/frontend dev"');
     expect(rendered).toContain(
-      '"test": "bun --cwd apps/frontend run test && bun test ./.codex/hooks ./.claude/hooks"',
+      '"test": "bun run --cwd apps/frontend test && bun test ./.agents/scripts/hooks ./.codex/hooks ./.claude/hooks ./scripts/validation"',
     );
     expect(rendered).not.toContain('"validate:frontend"');
     expect(rendered).not.toContain('"test:hooks"');
@@ -151,6 +153,21 @@ describe("renderTemplate", () => {
     const rendered = renderTemplate("apps/frontend/src/routes/index.tsx.tpl", frontendAiContext);
     expect(rendered).toContain("<h1>forge-frontend</h1>");
     expect(rendered).toContain("normalized by Kitsmith");
+  });
+
+  test("renders frontend agent guidance for TanStack workspaces", () => {
+    const rendered = renderTemplate(".claude/rules/frontend-code.md.tpl", frontendAiContext);
+    expect(rendered).toContain('  - "apps/frontend/**"');
+    expect(rendered).toContain("TanStack Router");
+    expect(rendered).toContain("routeTree.gen.ts");
+    expect(rendered).not.toContain("__");
+  });
+
+  test("renders backend agent source guidance", () => {
+    const rendered = renderTemplate(".claude/rules/source-code.md.tpl", backendContext);
+    expect(rendered).toContain('  - "src/**/*.ts"');
+    expect(rendered).toContain("## Source Code Conventions");
+    expect(rendered).not.toContain("__");
   });
 
   test("renders lefthook without frontend commands for backend-only projects", () => {
@@ -166,6 +183,7 @@ describe("renderTemplate", () => {
     const rendered = renderTemplate("lefthook.yml.tpl", frontendAiContext);
     expect(rendered).toContain("frontend-oxc:");
     expect(rendered).toContain("apps/frontend/**/*.{ts,tsx}");
+    expect(rendered).toContain(".agents/scripts/hooks/**/*.ts");
     expect(rendered).toContain(".codex/hooks/**/*.ts");
     expect(rendered).toContain(".claude/hooks/**/*.ts");
     expect(rendered).not.toContain("src/**/*.ts");
@@ -176,6 +194,7 @@ describe("renderTemplate", () => {
     const knip = renderTemplate("knip.jsonc.tpl", frontendAiContext);
 
     expect(tsconfig).toContain('"scripts/**/*.ts"');
+    expect(tsconfig).toContain('".agents/scripts/hooks/**/*.ts"');
     expect(tsconfig).toContain('".codex/hooks/**/*.ts"');
     expect(tsconfig).toContain('".claude/hooks/**/*.ts"');
     expect(tsconfig).not.toContain('"src/**/*.ts"');
@@ -183,6 +202,7 @@ describe("renderTemplate", () => {
     expect(knip).toContain('"@commitlint/cli"');
     expect(knip).toContain('"jscpd"');
     expect(knip).toContain('"lefthook"');
+    expect(knip).toContain('".agents/scripts/hooks/**/*.ts"');
     expect(knip).toContain('".codex/hooks/**/*.ts"');
     expect(knip).toContain('".claude/hooks/**/*.ts"');
     expect(knip).not.toContain('"src/index.ts"');

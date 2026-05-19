@@ -85,7 +85,7 @@ function assertNoExternalPackageExecutorScripts(scripts: JsonObject, label: stri
 }
 
 async function assertGeneratedValidationRunnerAvoidsPackageExecutors(root: string): Promise<void> {
-  const relativePath = "scripts/validation/validation-runner.ts";
+  const relativePath = "scripts/validation/internal/validation-runner.ts";
   const content = await Bun.file(join(root, relativePath)).text();
   const forbiddenSnippets = [
     "bun x",
@@ -173,38 +173,37 @@ async function assertRootContract(
   packageJson: JsonObject,
   packageScripts: JsonObject,
 ): Promise<void> {
-  const projectName = contract.templateContext.projectName;
   const packageName = contract.templateContext.packageName;
   const lefthook = await Bun.file(join(root, "lefthook.yml")).text();
   const devDependencies = objectField(packageJson, "devDependencies");
 
   assertPathExists(root, "package.json");
-  assertPathExists(root, "README.md");
   assertPathExists(root, "bunfig.toml");
   assertPathExists(root, ".oxlintrc.jsonc");
   assertPathExists(root, "scripts/validation/validate.ts");
   assertPathExists(root, "scripts/validation/commit-message.ts");
   assertPathExists(root, "commitlint.config.js");
-  const validationPlanPath = "scripts/validation/validation-plan.ts";
+  assertPathMissing(root, "README.md");
+  assertPathMissing(root, "scripts/validation/README.md");
+  assertPathMissing(root, "scripts/agents/AGENTS.md");
+  const validationPlanPath = "scripts/validation/internal/validation-plan.ts";
   assertPathExists(root, validationPlanPath);
-  assertPathExists(root, "scripts/validation/validation-runner.ts");
+  assertPathExists(root, "scripts/validation/internal/validation-runner.ts");
+  assertPathExists(root, "scripts/validation/shared/quality-scope-policy.ts");
   assertPathExists(root, "knip.jsonc");
   assertPathExists(root, "scripts/quality/check-links-local.ts");
   assertNoExternalPackageExecutorScripts(packageScripts, "root package");
   await assertGeneratedValidationRunnerAvoidsPackageExecutors(root);
 
-  await assertFileContains(root, "README.md", `# ${projectName}`);
-  await assertFileContains(root, "README.md", "Hooks and validation");
-  await assertFileContains(root, "README.md", "Conventional Commits");
-  await assertFileContains(root, "README.md", "glob_matcher: doublestar");
   await assertFileContains(root, "lefthook.yml", "glob_matcher: doublestar");
   await assertFileContains(root, "lefthook.yml", "commit-msg:");
   await assertFileContains(root, "lefthook.yml", "bun scripts/validation/commit-message.ts {1}");
   await assertFileContains(root, "commitlint.config.js", "@commitlint/config-conventional");
-  assertPathExists(root, "scripts/validation/routing-policy.ts");
   await assertFileContains(root, "knip.jsonc", '"@commitlint/cli"');
   await assertFileContains(root, "knip.jsonc", '"jscpd"');
   await assertFileContains(root, ".oxlintrc.jsonc", '"correctness": "error"');
+  await assertFileContains(root, "bunfig.toml", "exact = true");
+  await assertFileContains(root, "bunfig.toml", "minimumReleaseAge = 259200");
   await assertFileContains(
     root,
     "lefthook.yml",
@@ -347,7 +346,7 @@ async function assertAiContract(
   contract: GeneratedProjectContract,
   packageScripts: JsonObject,
 ): Promise<void> {
-  const { ai, backend, frontend } = contract.shape;
+  const { ai, backend } = contract.shape;
 
   if (!ai) {
     assertPathMissing(root, "CLAUDE.md");
@@ -356,52 +355,58 @@ async function assertAiContract(
     assertPathMissing(root, ".codex");
     assertPathMissing(root, "scripts/validation/format-and-lint.ts");
     assertPathMissing(root, "scripts/validation/format-and-lint-routing.ts");
-    assertPathMissing(root, "scripts/validation/validate-on-stop.ts");
+    assertPathMissing(root, "scripts/validation/shared/quality-workspace.ts");
+    assertPathMissing(root, "scripts/validation/shared/repo-path.ts");
     assertUndefined(packageScripts["agents:sync"], "agents:sync script");
     assertUndefined(packageScripts["agents:check"], "agents:check script");
     return;
   }
 
   assertPathExists(root, "CLAUDE.md");
-  assertPathExists(root, ".claude/rules/project-conventions.md");
-  assertPathExists(root, "AGENTS.md");
+  assertPathExists(root, ".claude/rules/agent-hook-runtime.md");
+  assertPathExists(root, ".claude/rules/native-hook-wrappers.md");
   if (backend) {
+    assertPathExists(root, ".claude/rules/source-code.md");
     assertPathExists(root, "src/AGENTS.md");
   } else {
+    assertPathMissing(root, ".claude/rules/source-code.md");
     assertPathMissing(root, "src/AGENTS.md");
   }
+  assertPathExists(root, ".claude/rules/validation-tooling.md");
+  assertPathExists(root, "AGENTS.md");
+  assertPathExists(root, ".agents/scripts/hooks/AGENTS.md");
+  assertPathExists(root, ".codex/hooks/AGENTS.md");
+  assertPathExists(root, ".claude/hooks/AGENTS.md");
+  assertPathExists(root, "scripts/quality/AGENTS.md");
+  assertPathExists(root, "scripts/validation/AGENTS.md");
   assertPathExists(root, ".agents/agents-md-manifest.json");
   assertPathExists(root, ".mcp.json");
   assertPathExists(root, ".codex/config.toml");
   await assertFileContains(root, ".codex/config.toml", "hooks = true");
   assertPathMissing(root, ".codex/hooks.json");
   assertPathExists(root, ".codex/hooks/guard-destructive.ts");
-  assertPathExists(root, ".codex/hooks/guard-destructive.test.ts");
   assertPathExists(root, ".codex/hooks/guard-edit-paths.ts");
   assertPathExists(root, ".codex/hooks/post-edit-quality.ts");
   assertPathExists(root, ".codex/hooks/stop-validate.ts");
-  assertPathExists(root, ".codex/hooks/lib.ts");
-  assertPathExists(root, ".codex/hooks/lib.test.ts");
   assertPathExists(root, ".claude/hooks/guard-destructive.ts");
-  assertPathExists(root, ".claude/hooks/guard-destructive.test.ts");
-  assertPathExists(root, "scripts/validation/format-and-lint.ts");
-  assertPathExists(root, "scripts/validation/format-and-lint-routing.ts");
-  assertPathExists(root, "scripts/validation/repo-path.ts");
+  assertPathExists(root, ".claude/hooks/post-edit-quality.ts");
+  assertPathExists(root, ".claude/hooks/stop-validate.ts");
+  assertPathExists(root, ".agents/scripts/hooks/core/contract.ts");
+  assertPathExists(root, ".agents/scripts/hooks/core/post-edit-quality.ts");
+  assertPathExists(root, ".agents/scripts/hooks/adapters/codex.ts");
+  assertPathExists(root, ".agents/scripts/hooks/adapters/claude.ts");
+  assertPathExists(root, ".agents/scripts/hooks/adapters/pi.example.ts");
+  assertPathExists(root, ".agents/scripts/hooks/runtime/run-post-edit-hook.ts");
+  assertPathExists(root, ".agents/scripts/hooks/runtime/run-pre-tool-hook.ts");
+  assertPathExists(root, ".agents/scripts/hooks/runtime/run-stop-hook.ts");
   assertPathExists(root, "scripts/validation/validate-on-stop.ts");
+  assertPathExists(root, "scripts/validation/shared/quality-workspace.ts");
+  assertPathExists(root, "scripts/validation/shared/repo-path.ts");
   assertPathExists(root, "scripts/agents/sync-agents-md.ts");
 
-  await assertFileContains(root, "CLAUDE.md", "Opinionated Bun project bootstrapped");
-  await assertFileContains(
-    root,
-    ".claude/rules/project-conventions.md",
-    "Keep `lefthook.yml` globs aligned with the repo surfaces they protect",
-  );
-  await assertFileContains(
-    root,
-    ".claude/rules/project-conventions.md",
-    "If the repo layout changes, update Lefthook and validation scripts in the same change",
-  );
-  await assertFileContains(root, ".codex/config.toml", "git rev-parse --show-toplevel");
+  await assertFileContains(root, "CLAUDE.md", "Fill this file with project-specific context");
+  await assertFileContains(root, ".claude/rules/agent-hook-runtime.md", ".agents/scripts/hooks");
+  await assertFileContains(root, ".claude/rules/native-hook-wrappers.md", "Keep wrappers thin");
   await assertFileContains(root, ".codex/config.toml", ".codex/hooks/guard-destructive.ts");
   await assertFileContains(
     root,
@@ -415,119 +420,95 @@ async function assertAiContract(
   await assertFileExcludes(root, ".codex/config.toml", 'matcher = "^(apply_patch|Edit|Write)$"');
   await assertFileExcludes(root, ".codex/config.toml", "timeout = 45");
   await assertFileExcludes(root, ".codex/config.toml", "timeout = 180");
-  assertPathExists(root, ".codex/hooks/guard-destructive-core.ts");
-  assertPathExists(root, ".codex/hooks/guard-destructive-core.test.ts");
-  assertPathExists(root, ".claude/hooks/guard-destructive-core.ts");
-  assertPathExists(root, ".claude/hooks/guard-destructive-core.test.ts");
   await assertFileContains(
     root,
     ".codex/hooks/guard-destructive.ts",
-    "./guard-destructive-core.ts",
+    "../../.agents/scripts/hooks/adapters/codex.ts",
   );
   await assertFileContains(
     root,
     ".claude/hooks/guard-destructive.ts",
-    "./guard-destructive-core.ts",
+    "../../.agents/scripts/hooks/adapters/claude.ts",
   );
-  await assertFileContains(root, ".codex/hooks/lib.ts", "stop_hook_active");
-  await assertFileContains(root, ".codex/hooks/lib.ts", "generatedAgentPathsFromManifest");
-  await assertFileContains(root, ".codex/hooks/lib.ts", "agents-md-manifest.json");
-  await assertFileContains(root, ".codex/hooks/lib.ts", "tmpdir()");
-  await assertFileContains(root, ".codex/hooks/lib.ts", 'platform === "win32"');
-  await assertFileContains(root, ".codex/hooks/lib.ts", ".cmd");
-  await assertFileContains(root, ".codex/hooks/lib.ts", ".exe");
-  await assertGeneratedAgentsManifest(root, {
-    backend,
-    frontend: frontend === "tanstack",
-  });
+  await assertGeneratedAgentsManifest(root);
   await assertFileContains(root, "scripts/agents/sync-agents-md.ts", "toPosixPath");
   await assertFileContains(root, "scripts/agents/sync-agents-md.ts", "generated.map(toPosixPath)");
   await assertFileContains(root, "scripts/agents/sync-agents-md.ts", ".map(toPosixPath)");
-  await assertFileContains(root, "scripts/validation/repo-path.ts", "repoRelativePath");
-  await assertFileContains(root, "scripts/validation/repo-path.ts", "toPosixSeparators");
+  await assertFileContains(root, "scripts/validation/shared/repo-path.ts", "repoRelativePath");
+  await assertFileContains(root, "scripts/validation/shared/repo-path.ts", "toPosixSeparators");
   await assertFileContains(
     root,
-    "scripts/validation/format-and-lint.ts",
+    ".agents/scripts/hooks/core/post-edit-quality.ts",
     "resolveGeneratedProjectWorkspace",
   );
   await assertFileContains(
     root,
-    "scripts/validation/format-and-lint-routing.ts",
-    "resolveGeneratedProjectWorkspace",
-  );
-  await assertFileContains(
-    root,
-    "scripts/validation/format-and-lint-routing.ts",
-    "repoRelativePath",
-  );
-  await assertFileContains(
-    root,
-    "scripts/validation/format-and-lint-routing.ts",
+    ".agents/scripts/hooks/core/post-edit-quality.ts",
     "hasRoutableExtension",
   );
   await assertFileExcludes(
     root,
-    "scripts/validation/format-and-lint-routing.ts",
-    "resolveLiveRepoWorkspace",
-  );
-  await assertFileExcludes(
-    root,
-    "scripts/validation/format-and-lint-routing.ts",
+    ".agents/scripts/hooks/core/post-edit-quality.ts",
     "isProductSurface",
   );
   await assertFileExcludes(
     root,
-    "scripts/validation/format-and-lint-routing.ts",
+    ".agents/scripts/hooks/core/post-edit-quality.ts",
     "template-sources/",
   );
   await assertFileContains(root, ".claude/settings.json", "$CLAUDE_PROJECT_DIR");
   await assertFileExcludes(root, ".claude/settings.json", ".codex/");
+  await assertFileContains(root, "lefthook.yml", '- ".agents/scripts/hooks/**/*.ts"');
   await assertFileContains(root, "lefthook.yml", '- ".codex/hooks/**/*.ts"');
   await assertFileContains(root, "lefthook.yml", '- ".claude/hooks/**/*.ts"');
+  await assertFileContains(root, ".oxlintrc.jsonc", '"!.agents/scripts/hooks/**"');
+  await assertFileContains(root, "tsconfig.json", '".agents/scripts/hooks/**/*.ts"');
   await assertFileContains(root, "tsconfig.json", '".codex/hooks/**/*.ts"');
   await assertFileContains(root, "tsconfig.json", '".claude/hooks/**/*.ts"');
+  await assertFileContains(root, ".dependency-cruiser.cjs", "NATIVE_HOOK_WRAPPER_ALLOWED_IMPORT");
   await assertFileContains(
     root,
     ".dependency-cruiser.cjs",
-    "^\\\\.codex/hooks/(guard-destructive|guard-edit-paths|post-edit-quality|stop-validate)\\\\.ts$",
+    "^\\\\.agents/scripts/hooks/(adapters|runtime)/",
   );
-  await assertFileContains(
-    root,
-    ".dependency-cruiser.cjs",
-    "^\\\\.claude/hooks/guard-destructive\\\\.ts$",
-  );
-  await assertFileExcludes(root, ".dependency-cruiser.cjs", '"^\\\\.codex/hooks/",');
 
   assertDefined(packageScripts["agents:sync"], "agents:sync script");
   assertUndefined(packageScripts["agents:check"], "agents:check script");
   assertUndefined(packageScripts["test:hooks"], "test:hooks script");
 }
 
-async function assertGeneratedAgentsManifest(
-  root: string,
-  shape: { readonly backend: boolean; readonly frontend: boolean },
-): Promise<void> {
+async function assertGeneratedAgentsManifest(root: string): Promise<void> {
   const manifest = await readJsonObject(join(root, ".agents/agents-md-manifest.json"));
   assertEqual(manifest["version"], 2, "agents manifest version");
   const generated = manifest["generated"];
   const outputs = objectField(manifest, "outputs");
   const sources = objectField(manifest, "sources");
+  const hasFrontendAgents = await Bun.file(join(root, "apps/frontend/AGENTS.md")).exists();
+  const hasSourceAgents = await Bun.file(join(root, "src/AGENTS.md")).exists();
   const expectedGenerated = [
     "AGENTS.md",
-    ...(shape.frontend ? ["apps/frontend/src/AGENTS.md"] : []),
-    "scripts/AGENTS.md",
-    ...(shape.backend ? ["src/AGENTS.md"] : []),
+    ".agents/scripts/hooks/AGENTS.md",
+    ".claude/hooks/AGENTS.md",
+    ".codex/hooks/AGENTS.md",
+    ...(hasFrontendAgents ? ["apps/frontend/AGENTS.md"] : []),
+    "scripts/quality/AGENTS.md",
+    "scripts/validation/AGENTS.md",
+    ...(hasSourceAgents ? ["src/AGENTS.md"] : []),
   ].toSorted((left, right) => left.localeCompare(right));
 
   assertStringArrayExact(generated, expectedGenerated, "agents manifest generated");
   assertObjectHasKey(outputs, "AGENTS.md", "agents manifest outputs");
-  if (shape.backend) {
+  if (hasSourceAgents) {
     assertObjectHasKey(outputs, "src/AGENTS.md", "agents manifest outputs");
   }
-  if (shape.frontend) {
-    assertObjectHasKey(outputs, "apps/frontend/src/AGENTS.md", "agents manifest outputs");
+  assertObjectHasKey(outputs, ".agents/scripts/hooks/AGENTS.md", "agents manifest outputs");
+  assertObjectHasKey(outputs, ".codex/hooks/AGENTS.md", "agents manifest outputs");
+  assertObjectHasKey(outputs, ".claude/hooks/AGENTS.md", "agents manifest outputs");
+  if (hasFrontendAgents) {
+    assertObjectHasKey(outputs, "apps/frontend/AGENTS.md", "agents manifest outputs");
   }
-  assertObjectHasKey(outputs, "scripts/AGENTS.md", "agents manifest outputs");
+  assertObjectHasKey(outputs, "scripts/quality/AGENTS.md", "agents manifest outputs");
+  assertObjectHasKey(outputs, "scripts/validation/AGENTS.md", "agents manifest outputs");
   const rootOutput = objectField(outputs, "AGENTS.md");
   assertEqual(rootOutput["kind"], "root", "AGENTS.md manifest kind");
   assertEqual(rootOutput["sourcePath"], "CLAUDE.md", "AGENTS.md manifest sourcePath");
@@ -586,6 +567,7 @@ async function assertFrontendContract(
   assertNoExternalPackageExecutorScripts(frontendScripts, "frontend package");
   await assertFileContains(root, "apps/frontend/playwright.config.ts", "--strictPort");
   await assertFileContains(root, "apps/frontend/playwright.config.ts", "PLAYWRIGHT_PORT");
+  await assertFileContains(root, "apps/frontend/playwright.config.ts", "PLAYWRIGHT_REUSE_SERVER");
   await assertFileContains(
     root,
     "apps/frontend/playwright.config.ts",
@@ -657,9 +639,14 @@ async function assertFrontendContract(
   assertPathMissing(root, "apps/frontend/src/routes/about.tsx");
 
   if (ai) {
-    assertPathExists(root, "apps/frontend/src/AGENTS.md");
-    assertPathExists(root, ".claude/rules/frontend-conventions.md");
+    assertPathExists(root, ".claude/rules/frontend-code.md");
+    assertPathExists(root, "apps/frontend/AGENTS.md");
+    assertPathMissing(root, "apps/frontend/src/AGENTS.md");
+    assertPathMissing(root, ".claude/rules/frontend-conventions.md");
+    await assertFileContains(root, "apps/frontend/AGENTS.md", "TanStack Router");
+    await assertFileContains(root, "apps/frontend/AGENTS.md", "routeTree.gen.ts");
   } else {
+    assertPathMissing(root, "apps/frontend/AGENTS.md");
     assertPathMissing(root, "apps/frontend/src/AGENTS.md");
   }
 }

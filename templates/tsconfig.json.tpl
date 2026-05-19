@@ -21,5 +21,7 @@
     "allowUnreachableCode": false,
     "allowUnusedLabels": false__EFFECT_TSCONFIG_PLUGINS__
   },
-  "include": [__TSCONFIG_INCLUDE__]
+  "include": [
+__TSCONFIG_INCLUDE__
+  ]
 }

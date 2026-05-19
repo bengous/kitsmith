@@ -1,8 +1,13 @@
 #!/usr/bin/env bun
 
-import { CODE_PATTERN, classifyScopes, expandConfigScope, getChangedFiles } from "./detect-scope";
-import { resolveProjectRoot } from "./resolve-bin";
-import { runGeneratedValidationStep } from "./validation-runner.ts";
+import {
+  CODE_PATTERN,
+  classifyScopes,
+  expandConfigScope,
+  getChangedFiles,
+} from "./internal/detect-scope.ts";
+import { resolveProjectRoot } from "./internal/resolve-bin.ts";
+import { runGeneratedValidationStep } from "./internal/validation-runner.ts";
 
 function runGeneratedStep(step: string, cwd: string, errors: string[]): void {
   const result = runGeneratedValidationStep(step, cwd);

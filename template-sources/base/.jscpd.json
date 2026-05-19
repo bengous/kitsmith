@@ -6,8 +6,9 @@
     "**/*.e2e.test.ts",
     "**/AGENTS.md",
     "**/skills/**",
-    "**/.agents/**",
-    "**/.claude/**"
+    "**/.agents/agents-md-manifest.json",
+    "**/.claude/rules/**",
+    "**/.claude/settings.json"
   ],
   "minLines": 20,
   "minTokens": 100,

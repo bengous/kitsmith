@@ -11,6 +11,11 @@
  * the directory tree loading AGENTS.md files. This script keeps them in sync so
  * all agents share the same source of truth.
  *
+ * Keep generated AGENTS.md files model-useful: do not add visible generated-file
+ * banners or maintenance warnings. Protection belongs in the manifest, drift
+ * detection, validation, and hooks. Prefer narrow surface-specific rules; broad
+ * rules that target unrelated directories create repeated context for agents.
+ *
  * ## Mapping
  *
  *   Source (Claude Code native)      → Generated (for other agents)
@@ -68,7 +73,7 @@
  *   2. Manifest paths match current rule → layer mapping
  *   3. Semantic check: each layer file contains all expected rule bodies
  *
- * The validation hook (validate-on-stop.ts) runs --check automatically.
+ * The generated validation plan runs this script in --check mode automatically.
  *
  * ## Usage
  *
@@ -86,7 +91,15 @@ const RULES_DIR = ".claude/rules";
 const ROOT_MD = "CLAUDE.md";
 const ROOT_AGENTS_MD = "AGENTS.md";
 const MANIFEST_PATH = ".agents/agents-md-manifest.json";
-const MANAGED_AGENTS_GLOBS = ["src/*/AGENTS.md", "scripts/AGENTS.md", "scripts/*/AGENTS.md"];
+const MANAGED_AGENTS_GLOBS = [
+  ".agents/scripts/hooks/AGENTS.md",
+  ".codex/hooks/AGENTS.md",
+  ".claude/hooks/AGENTS.md",
+  "apps/*/AGENTS.md",
+  "src/*/AGENTS.md",
+  "scripts/AGENTS.md",
+  "scripts/*/AGENTS.md",
+];
 
 function toPosixPath(path: string): string {
   return path.replaceAll("\\", "/");

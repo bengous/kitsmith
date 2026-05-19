@@ -9,7 +9,7 @@ output:
 pre-commit:
   commands:
     # Keep these globs aligned with the repo surfaces they protect.
-    # If the project layout changes, update these globs and the validation scripts together.
+    # If the project layout changes, update these globs and the quality tooling configs together.
     # `glob_matcher: doublestar` makes `**` match zero or more nested directories.
     root-oxc:
       glob:

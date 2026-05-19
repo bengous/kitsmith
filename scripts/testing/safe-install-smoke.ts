@@ -76,7 +76,7 @@ function buildInnerScript(
     `bun run ${probePath} ${SANDBOX_PROJECT}`,
     `cd ${SANDBOX_PROJECT}`,
     "bun run check",
-    "if [ -d apps/frontend ]; then bun --cwd apps/frontend run typecheck; fi",
+    "if [ -d apps/frontend ]; then bun run --cwd apps/frontend typecheck; fi",
     `cd ${repoRoot}`,
   ].join("\n");
 }

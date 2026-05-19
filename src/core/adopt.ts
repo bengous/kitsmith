@@ -217,6 +217,23 @@ function binName(packageJson: JsonObject, fallback: string): BinName {
   return toExistingBinName(fallback);
 }
 
+function isKitsmithParentRepo(destination: string): boolean {
+  return (
+    existsSync(join(destination, "template-sources/manifest.json")) &&
+    existsSync(join(destination, "src/core/generated-project-contract.ts"))
+  );
+}
+
+function assertNotKitsmithParentSelfAdoption(options: AdoptOptions): void {
+  if (String(options.packageName) !== "kitsmith" || !isKitsmithParentRepo(options.destination)) {
+    return;
+  }
+
+  throw new Error(
+    "Kitsmith parent tooling is maintained with `bun run parent-tooling:sync`, `bun run agents:sync`, and `bun run parent-tooling:check`; `kitsmith adopt .` is for external Bun projects.",
+  );
+}
+
 function describeAdoptedProject(options: AdoptOptions): GeneratedProjectDescription {
   return describeGeneratedProject({
     destination: options.destination,
@@ -532,6 +549,7 @@ export async function buildAdoptionPlan(
   runtime: AdoptRuntime = defaultAdoptRuntime,
 ): Promise<AdoptionPlan> {
   await assertAdoptableProject(options.destination);
+  assertNotKitsmithParentSelfAdoption(options);
   const description = describeAdoptedProject(options);
   const actions: AdoptionAction[] = [
     ...(await planPresetCopySpecs(options.destination, description, options.lintSeverity)),

@@ -1,6 +1,10 @@
 const recommended = require("./node_modules/dependency-cruiser/configs/recommended-strict.cjs");
 
 const NON_TEST_TS = "\\.(test|e2e\\.test)\\.ts$";
+const PRODUCTION_TOOLING_TS =
+  "^(src/(?!testing/)|scripts/(?!testing/)|\\.agents/scripts/hooks/|\\.codex/hooks/|\\.claude/hooks/).+\\.ts$";
+const NATIVE_HOOK_WRAPPER_TS = "^\\.(codex|claude)/hooks/[^/]+\\.ts$";
+const NATIVE_HOOK_WRAPPER_ALLOWED_IMPORT = "^\\.agents/scripts/hooks/(adapters|runtime)/";
 const ORPHAN_EXCEPTIONS = [
   "(^|/)\\.[^/]+\\.(js|cjs|mjs|ts|json)$",
   "^src/index\\.ts$",
@@ -34,11 +38,23 @@ module.exports = {
     })
     .concat([
       {
+        name: "native-hook-wrappers-stay-thin",
+        comment:
+          "Native hook wrappers must only import shared hook adapters and runtime entrypoints.",
+        severity: "error",
+        from: {
+          path: NATIVE_HOOK_WRAPPER_TS,
+        },
+        to: {
+          pathNot: NATIVE_HOOK_WRAPPER_ALLOWED_IMPORT,
+        },
+      },
+      {
         name: "no-prod-to-testing",
         comment: "Production code must not depend on test helpers.",
         severity: "error",
         from: {
-          path: "^(src|scripts)/(?!testing/).+\\.ts$",
+          path: PRODUCTION_TOOLING_TS,
           pathNot: NON_TEST_TS,
         },
         to: {

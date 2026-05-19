@@ -1,13 +1,13 @@
 import type {
   QualityWorkspace as GeneratedQualityWorkspace,
   RoutingScope as GeneratedRoutingScope,
-} from "../../template-sources/base/scripts/validation/routing-policy.ts";
+} from "../../template-sources/base/scripts/validation/shared/quality-scope-policy.ts";
 import type { RoutingContext } from "./routing-policy.ts";
 import { describe, expect, test } from "bun:test";
 import {
   classifyRoutingPath as classifyGeneratedRoutingPath,
   resolveQualityWorkspace as resolveGeneratedQualityWorkspace,
-} from "../../template-sources/base/scripts/validation/routing-policy.ts";
+} from "../../template-sources/base/scripts/validation/shared/quality-scope-policy.ts";
 import { classifyRoutingPath, resolveQualityWorkspace } from "./routing-policy.ts";
 
 const liveContext = {
@@ -89,6 +89,14 @@ describe("routing policy", () => {
       formatMode: "check",
     });
     expect(
+      resolveQualityWorkspace(".agents/scripts/hooks/core/contract.ts", liveContext),
+    ).toMatchObject({
+      name: "root",
+      lint: true,
+      lintFix: true,
+      formatMode: "write",
+    });
+    expect(
       resolveQualityWorkspace("template-sources/ai/.codex/hooks/lib.ts", liveContext),
     ).toMatchObject({ name: "product", lint: false, formatMode: "write" });
 
@@ -113,6 +121,7 @@ describe("routing policy", () => {
     const paths = [
       "src/index.ts",
       "scripts/validation/validate.ts",
+      ".agents/scripts/hooks/core/contract.ts",
       ".codex/hooks/lib.ts",
       ".claude/hooks/guard-destructive.ts",
       "apps/frontend/src/main.tsx",

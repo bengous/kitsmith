@@ -1,26 +1,6 @@
 #!/usr/bin/env bun
 
-import { readHookInput, runPostEditQuality } from "./lib";
+import { codexAdapter } from "../../.agents/scripts/hooks/adapters/codex.ts";
+import { runPostEditHook } from "../../.agents/scripts/hooks/runtime/run-post-edit-hook.ts";
 
-const result = await runPostEditQuality(await readHookInput());
-
-if (result.blockReason !== undefined) {
-  console.log(
-    JSON.stringify({
-      decision: "block",
-      reason: result.blockReason,
-    }),
-  );
-  process.exit(0);
-}
-
-if (result.systemMessage !== undefined) {
-  console.log(
-    JSON.stringify({
-      hookSpecificOutput: {
-        hookEventName: "PostToolUse",
-        additionalContext: result.systemMessage,
-      },
-    }),
-  );
-}
+await runPostEditHook(codexAdapter);

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   normalizeTouchedPath as normalizeGeneratedPresetTouchedPath,
   resolveGeneratedProjectWorkspace as resolveGeneratedPresetWorkspace,
-} from "../../template-sources/ai/scripts/validation/format-and-lint-routing.ts";
+} from "../../template-sources/ai/scripts/validation/shared/quality-workspace.ts";
 import {
   formatCommand,
   formatCommandFailure,
@@ -103,6 +103,7 @@ describe("format-and-lint workspace resolution", () => {
   test("live repo lints root code and agent hook surfaces", () => {
     expect(resolveWorkspace("src/index.ts")?.lint).toBe(true);
     expect(resolveWorkspace("scripts/validation/validate.ts")?.lint).toBe(true);
+    expect(resolveWorkspace(".agents/scripts/hooks/core/contract.ts")?.lint).toBe(true);
     expect(resolveWorkspace(".codex/hooks/lib.ts")?.lint).toBe(true);
     expect(resolveWorkspace(".claude/hooks/guard-destructive.ts")?.lint).toBe(true);
   });

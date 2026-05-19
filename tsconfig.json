@@ -21,5 +21,11 @@
     "allowUnreachableCode": false,
     "allowUnusedLabels": false
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts", ".codex/hooks/**/*.ts", ".claude/hooks/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "scripts/**/*.ts",
+    ".agents/scripts/hooks/**/*.ts",
+    ".codex/hooks/**/*.ts",
+    ".claude/hooks/**/*.ts"
+  ]
 }

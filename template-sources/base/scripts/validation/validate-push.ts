@@ -1,9 +1,12 @@
 #!/usr/bin/env bun
 
-import { expandConfigScope, getChangedScopes } from "./detect-scope";
-import { resolveProjectRoot } from "./resolve-bin";
-import { GENERATED_PROJECT_PUSH_VALIDATION_POLICY } from "./validation-plan.ts";
-import { resolveValidationStepCommand, runGeneratedValidationStep } from "./validation-runner.ts";
+import { expandConfigScope, getChangedScopes } from "./internal/detect-scope.ts";
+import { resolveProjectRoot } from "./internal/resolve-bin.ts";
+import { GENERATED_PROJECT_PUSH_VALIDATION_POLICY } from "./internal/validation-plan.ts";
+import {
+  resolveValidationStepCommand,
+  runGeneratedValidationStep,
+} from "./internal/validation-runner.ts";
 
 async function main(): Promise<void> {
   const projectRoot = resolveProjectRoot(import.meta.dir);

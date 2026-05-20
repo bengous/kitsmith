@@ -1,6 +1,6 @@
 {
   "name": "kitsmith",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Bun-first project generator for TypeScript repos with AI-agent guardrails.",
   "type": "module",
   "private": false,

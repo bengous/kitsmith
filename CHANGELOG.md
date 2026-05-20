@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.4.2 - 2026-05-20
+
+### Added
+
+- Add generated dependency baseline checks so generated projects can verify
+  their project-owned tooling dependencies against the Kitsmith contract.
+- Add GitHub Actions release-preparation and CI gating coverage for generated,
+  quality, and sandbox validation lanes.
+
+### Changed
+
+- Split product and maintainer documentation into explicit domain contracts,
+  ubiquitous-language notes, and maintainer runbooks.
+
+### Fixed
+
+- Enforce Stop hook read-only validation with JSONL feedback, ignored protocol
+  artifacts, generated-project coverage, and portable Windows behavior.
+- Harden generated dependency Pkl Stop hook validation and AGENTS manifest
+  cleanup recovery.
+- Keep generated dependency checks from parsing `mise` prepare output when
+  `package.json` changes.
+- Reduce sandbox validation flakiness and broaden local link-check coverage.
+
 ## 0.4.1 - 2026-05-19
 
 ### Fixed

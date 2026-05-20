@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   checkGeneratedDependencies,
+  DEFAULT_PKL_COMMAND,
   evaluateGeneratedDependenciesPkl,
   parseGeneratedDependencyBaseline,
   parseGeneratedDependenciesMode,
@@ -325,6 +326,10 @@ describe("generated dependency baseline validation", () => {
 });
 
 describe("generated dependency drift checks", () => {
+  test("default Pkl command suppresses mise prepare output", () => {
+    expect(DEFAULT_PKL_COMMAND).toEqual(["mise", "exec", "--quiet", "--no-prepare", "--", "pkl"]);
+  });
+
   test("mode parsing rejects ambiguous or unknown CLI flags", () => {
     expect(parseGeneratedDependenciesMode(["--write"])).toBe("write");
     expect(parseGeneratedDependenciesMode(["--check"])).toBe("check");

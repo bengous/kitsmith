@@ -6,6 +6,7 @@
 		".claude/rules/AGENTS.md",
 		".codex/hooks/AGENTS.md",
 		"AGENTS.md",
+		"config/generated-dependencies/AGENTS.md",
 		"scripts/AGENTS.md",
 		"scripts/agents/AGENTS.md",
 		"scripts/quality/AGENTS.md",
@@ -40,7 +41,12 @@
 		"AGENTS.md": {
 			"kind": "root",
 			"sourcePath": "CLAUDE.md",
-			"checksum": "sha256-7215a129f49fa1afdbc96232786d71f85031f4f291eb103d063fe873a4b40ab6"
+			"checksum": "sha256-06be554efecf884bc7e670901b02bb5f1270588d8550a329947eab68e5aaf166"
+		},
+		"config/generated-dependencies/AGENTS.md": {
+			"kind": "layer",
+			"sourcePath": ".claude/rules/generated-dependencies.md",
+			"checksum": "sha256-905808cdd7887b947de22150158d26074580548d77d2015e7ba37d92138aa8bd"
 		},
 		"scripts/AGENTS.md": {
 			"kind": "layer",
@@ -75,7 +81,7 @@
 		"src/AGENTS.md": {
 			"kind": "layer",
 			"sourcePath": ".claude/rules/scaffolder-source.md",
-			"checksum": "sha256-e462ec954c32ed67ed621f3b137bab7ca34c4712de393b60da4e0f2375e0ce12"
+			"checksum": "sha256-5e5c41afae881079920bf4f733df7b8eaeae753a7c439b7b758c51b92bdf91ac"
 		},
 		"template-sources/AGENTS.md": {
 			"kind": "layer",
@@ -98,8 +104,11 @@
 		".claude/rules/antipattern-coverage.md": {
 			"checksum": "sha256-99ea835c3123b3700014ff424966d8e2cb62ce18d851dbfc7cd4d780936d5615"
 		},
+		".claude/rules/generated-dependencies.md": {
+			"checksum": "sha256-a4b065e5f42977e2a2452d191318a37e9ba6dee07857d8fe9dba5834e9da1e1d"
+		},
 		".claude/rules/generated-project-contract.md": {
-			"checksum": "sha256-6e5f1aa7229e1045ab511440cbedb44ddd8476b7a1396faa35295d67c20a0bc3"
+			"checksum": "sha256-4ec53cace230e24cfcf757b73c18aaa274c0a2d13b3feb9c91a7d3d6e2086470"
 		},
 		".claude/rules/native-hook-wrappers.md": {
 			"checksum": "sha256-a1f16d16e2c504dfa680f4e7293baea9105c790e932b33658309635b45b5f9e6"
@@ -141,7 +150,7 @@
 			"checksum": "sha256-c6604b30f1d082af30dcfc71edb5a8ad4f4c83432c025e366f197c1ce40183db"
 		},
 		"CLAUDE.md": {
-			"checksum": "sha256-7215a129f49fa1afdbc96232786d71f85031f4f291eb103d063fe873a4b40ab6"
+			"checksum": "sha256-06be554efecf884bc7e670901b02bb5f1270588d8550a329947eab68e5aaf166"
 		}
 	}
 }

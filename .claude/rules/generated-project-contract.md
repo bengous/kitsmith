@@ -1,9 +1,8 @@
 ---
 paths:
-  - "src/**/*.ts"
   - "templates/**"
   - "template-sources/**"
-  - "scripts/testing/**/*.ts"
+  - "scripts/testing/**"
 ---
 
 ## Generated Project Contract

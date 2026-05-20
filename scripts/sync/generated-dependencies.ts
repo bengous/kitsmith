@@ -7,6 +7,7 @@ export const GENERATED_DEPENDENCIES_SCHEMA_PATH =
   "config/generated-dependencies/GeneratedDependencies.pkl";
 export const GENERATED_DEPENDENCIES_BASELINE_PATH = "config/generated-dependencies/baseline.pkl";
 export const GENERATED_DEPENDENCIES_ARTIFACT_PATH = "src/core/generated-dependencies.generated.ts";
+export const DEFAULT_PKL_COMMAND = ["mise", "exec", "--quiet", "--no-prepare", "--", "pkl"];
 
 export const DEPENDENCY_TARGETS = [
   "root.dependencies",
@@ -638,7 +639,7 @@ export async function evaluateGeneratedDependenciesPkl(
   input: PklCommandInput = {},
 ): Promise<string> {
   const cwd = input.cwd ?? process.cwd();
-  const command = input.command ?? ["mise", "exec", "--", "pkl"];
+  const command = input.command ?? DEFAULT_PKL_COMMAND;
   const executable = command[0];
   if (executable === undefined) {
     throw formatPklInvocationError(new Error("missing Pkl command"));

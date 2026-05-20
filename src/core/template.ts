@@ -223,6 +223,7 @@ export function templateValuesFromContract(
     ...rootToolingTemplateValues(contract),
     ...projectConventionTemplateValues(context),
     CONDITIONAL_COMMANDS_README: readmeCommandLines(contract),
+    AI_GITIGNORE: context.ai ? ".agents/tmp/" : "",
   };
 }
 

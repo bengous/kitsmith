@@ -382,6 +382,7 @@ async function assertAiContract(
   assertPathExists(root, ".mcp.json");
   assertPathExists(root, ".codex/config.toml");
   await assertFileContains(root, ".codex/config.toml", "hooks = true");
+  await assertFileContains(root, ".gitignore", ".agents/tmp/");
   assertPathMissing(root, ".codex/hooks.json");
   assertPathExists(root, ".codex/hooks/guard-destructive.ts");
   assertPathExists(root, ".codex/hooks/guard-edit-paths.ts");
@@ -435,6 +436,7 @@ async function assertAiContract(
   await assertFileContains(root, "scripts/agents/sync-agents-md.ts", ".map(toPosixPath)");
   await assertFileContains(root, "scripts/validation/shared/repo-path.ts", "repoRelativePath");
   await assertFileContains(root, "scripts/validation/shared/repo-path.ts", "toPosixSeparators");
+  await assertGeneratedAiStopHookContract(root);
   await assertFileContains(
     root,
     ".agents/scripts/hooks/core/post-edit-quality.ts",
@@ -515,6 +517,127 @@ async function assertGeneratedAgentsManifest(root: string): Promise<void> {
     throw new Error("Expected AGENTS.md manifest checksum to be sha256-prefixed");
   }
   assertObjectHasKey(sources, "CLAUDE.md", "agents manifest sources");
+}
+
+async function assertGeneratedAiStopHookContract(root: string): Promise<void> {
+  await runGeneratedProjectScript(
+    root,
+    `
+      import { writeFile } from "node:fs/promises";
+      import path from "node:path";
+      import { defaultRunCommand } from "./.agents/scripts/hooks/core/command-runner.ts";
+      import { runStopValidation } from "./.agents/scripts/hooks/core/stop-validation.ts";
+
+      async function git(args) {
+        const result = await defaultRunCommand(["git", ...args], { cwd: process.cwd() });
+        if (result.code !== 0) throw new Error(result.stderr || result.stdout);
+      }
+
+      await git(["init"]);
+      await git(["config", "user.email", "test@example.com"]);
+      await git(["config", "user.name", "Test User"]);
+      await git(["add", "."]);
+      await git(["commit", "-m", "Initial"]);
+
+      const result = await runStopValidation(
+        { agent: "codex", hook: "stop", cwd: process.cwd(), sessionId: "contract", touchedPathCandidates: [] },
+        async (command, options) => {
+          if (command[0] === "git") return defaultRunCommand(command, options);
+          await writeFile(path.join(process.cwd(), "generated-stop-mutation.txt"), "mutated by stop validation\\n");
+          return { code: 0, stdout: "", stderr: "" };
+        },
+      );
+      if (!result.blockReason?.includes("Stop validation read-only violation")) {
+        throw new Error("Expected generated Stop hook to block read-only violation, got " + result.blockReason);
+      }
+      if (!result.blockReason.includes("generated-stop-mutation.txt")) {
+        throw new Error("Expected read-only violation to list changed path, got " + result.blockReason);
+      }
+    `,
+    "generated AI Stop read-only contract",
+  );
+
+  await runGeneratedProjectScript(
+    root,
+    `
+      import { defaultRunCommand } from "./.agents/scripts/hooks/core/command-runner.ts";
+      import { runStopValidation } from "./.agents/scripts/hooks/core/stop-validation.ts";
+
+      const noisyOutput = Array.from({ length: 200 }, (_, index) => "wrote file-" + index).join("\\n");
+      const result = await runStopValidation(
+        { agent: "codex", hook: "stop", cwd: process.cwd(), sessionId: "contract", touchedPathCandidates: [] },
+        async (command, options) => {
+          if (command[0] === "git") return defaultRunCommand(command, options);
+          return {
+            code: 2,
+            stdout: JSON.stringify({
+              protocol: "kitsmith.stop-validation",
+              version: 1,
+              type: "failure",
+              runId: options.env?.["KITSMITH_STOP_RUN_ID"],
+              failureKind: "validation_failed",
+              step: "typecheck",
+              exitCode: 2,
+              stdoutTail: noisyOutput,
+              stdoutRef: ".agents/tmp/hooks/stop/contract/run/typecheck-stdout.txt",
+              actionHint: "Run typecheck outside Stop.",
+            }) + "\\n",
+            stderr: "",
+          };
+        },
+      );
+      if (!result.blockReason?.includes("Stop validation failed in typecheck")) {
+        throw new Error("Expected generated Stop hook to report JSONL failure, got " + result.blockReason);
+      }
+      if (!result.blockReason.includes("stdout: .agents/tmp/hooks/stop/contract/run/typecheck-stdout.txt")) {
+        throw new Error("Expected generated Stop hook to reference captured stdout, got " + result.blockReason);
+      }
+      if (result.blockReason.includes("wrote file-199")) {
+        throw new Error("Expected generated Stop hook not to inline noisy raw stdout");
+      }
+    `,
+    "generated AI Stop JSONL feedback contract",
+  );
+
+  await runGeneratedProjectScript(
+    root,
+    `
+      import { UnclassifiedStopStepError, runReadOnlyStopSteps } from "./scripts/validation/validate-on-stop.ts";
+
+      const executed = [];
+      try {
+        runReadOnlyStopSteps(["agents:sync"], process.cwd(), [], (step) => executed.push(step));
+      } catch (error) {
+        if (!(error instanceof UnclassifiedStopStepError)) {
+          throw error;
+        }
+      }
+      if (executed.length > 0) {
+        throw new Error("Expected generated Stop validation to refuse unclassified steps before execution");
+      }
+    `,
+    "generated Stop unclassified step contract",
+  );
+}
+
+async function runGeneratedProjectScript(
+  root: string,
+  script: string,
+  label: string,
+): Promise<void> {
+  const proc = Bun.spawn([process.execPath, "-e", script], {
+    cwd: root,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [stdout, stderr, exit] = await Promise.all([
+    Bun.readableStreamToText(proc.stdout),
+    Bun.readableStreamToText(proc.stderr),
+    proc.exited,
+  ]);
+  if (exit !== 0) {
+    throw new Error(`${label} failed:\n${stdout}${stderr}`);
+  }
 }
 
 async function assertFrontendContract(

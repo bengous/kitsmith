@@ -11,6 +11,8 @@ export type ValidationResult = {
   readonly step: string;
   readonly exit: number;
   readonly output: string;
+  readonly stdout: string;
+  readonly stderr: string;
   readonly ms: number;
 };
 
@@ -288,14 +290,15 @@ export function runValidationStepCommand(
     }),
   );
   const failed = results.find((result) => result.exitCode !== 0);
+  const stdout = results.map((result) => result.stdout.toString()).join("");
+  const stderr = results.map((result) => result.stderr.toString()).join("");
 
   return {
     step: stepCommand.step,
     exit: failed?.exitCode ?? 0,
-    output: results
-      .flatMap((result) => [result.stdout.toString(), result.stderr.toString()])
-      .join("")
-      .trimEnd(),
+    output: `${stdout}${stderr}`.trimEnd(),
+    stdout,
+    stderr,
     ms: performance.now() - startedAt,
   };
 }
@@ -307,6 +310,8 @@ export function runGeneratedValidationStep(step: string, cwd: string): Validatio
       step,
       exit: 1,
       output: `no generated validation command is defined for ${step}`,
+      stdout: "",
+      stderr: `no generated validation command is defined for ${step}`,
       ms: 0,
     };
   }
@@ -361,6 +366,8 @@ async function run(stepCommand: ValidationStepCommand): Promise<ValidationResult
     step: stepCommand.step,
     exit,
     output: (stdout + stderr).trimEnd(),
+    stdout,
+    stderr,
     ms: performance.now() - startedAt,
   };
 }
@@ -378,7 +385,14 @@ async function runVerboseSequential(
       stderr: "inherit",
     });
     const exit = await proc.exited;
-    results.push({ step: stepCommand.step, exit, output: "", ms: performance.now() - startedAt });
+    results.push({
+      step: stepCommand.step,
+      exit,
+      output: "",
+      stdout: "",
+      stderr: "",
+      ms: performance.now() - startedAt,
+    });
   }
   return results;
 }

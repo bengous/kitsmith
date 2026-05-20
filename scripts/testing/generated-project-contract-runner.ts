@@ -141,6 +141,24 @@ async function assertFileContains(
   }
 }
 
+async function assertFileContainsInOrder(
+  root: string,
+  relativePath: string,
+  expected: readonly string[],
+): Promise<void> {
+  const content = await Bun.file(join(root, relativePath)).text();
+  let offset = 0;
+  for (const fragment of expected) {
+    const index = content.indexOf(fragment, offset);
+    if (index === -1) {
+      throw new Error(
+        `Expected ${relativePath} to contain ${JSON.stringify(fragment)} after offset ${offset}`,
+      );
+    }
+    offset = index + fragment.length;
+  }
+}
+
 async function assertFileExcludes(
   root: string,
   relativePath: string,
@@ -202,6 +220,12 @@ async function assertRootContract(
   await assertFileContains(root, "knip.jsonc", '"@commitlint/cli"');
   await assertFileContains(root, "knip.jsonc", '"jscpd"');
   await assertFileContains(root, ".oxlintrc.jsonc", '"correctness": "error"');
+  await assertFileContainsInOrder(root, ".oxlintrc.jsonc", [
+    '"!.claude/hooks/**"',
+    '"**/node_modules/**"',
+    '"**/target/**"',
+    '"**/*.bundle.js"',
+  ]);
   await assertFileContains(root, "bunfig.toml", "exact = true");
   await assertFileContains(root, "bunfig.toml", "minimumReleaseAge = 259200");
   await assertFileContains(
@@ -707,6 +731,12 @@ async function assertFrontendContract(
     '"files": ["vite.config.ts", "playwright.config.ts"]',
   );
   await assertFileContains(root, "apps/frontend/.oxlintrc.jsonc", '"correctness": "error"');
+  await assertFileContainsInOrder(root, "apps/frontend/.oxlintrc.jsonc", [
+    '"src/routeTree.gen.ts"',
+    '"**/node_modules/**"',
+    '"**/target/**"',
+    '"**/*.bundle.js"',
+  ]);
   await assertFileContains(
     root,
     "apps/frontend/tsconfig.node.json",

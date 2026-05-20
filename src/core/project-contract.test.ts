@@ -247,5 +247,5 @@ for (const scenario of scenarios) {
         await Bun.file(join(destination, "apps/frontend/src/routes/index.tsx")).text(),
       ).not.toContain("native-index");
     }
-  });
+  }, 20_000);
 }

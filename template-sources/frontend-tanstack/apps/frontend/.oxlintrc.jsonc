@@ -93,5 +93,8 @@
     "!vite.config.ts",
     "!playwright.config.ts",
     "src/routeTree.gen.ts",
+    "**/node_modules/**",
+    "**/target/**",
+    "**/*.bundle.js",
   ],
 }

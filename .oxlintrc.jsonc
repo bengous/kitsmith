@@ -147,5 +147,8 @@
     "!.agents/scripts/hooks/**",
     "!.codex/hooks/**",
     "!.claude/hooks/**",
+    "**/node_modules/**",
+    "**/target/**",
+    "**/*.bundle.js",
   ],
 }

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.3 - 2026-05-21
+
+### Fixed
+
+- Run generated dependency Pkl checks directly through `pkl` so CI does not
+  depend on `mise exec` flag support.
+- Ignore nested generated, vendored, and build artefacts in Oxc configs for the
+  repo and generated projects.
+
 ## 0.4.2 - 2026-05-20
 
 ### Added

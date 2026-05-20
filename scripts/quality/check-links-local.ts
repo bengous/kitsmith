@@ -3,11 +3,35 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-const DOC_EXTENSIONS = new Set([".md", ".html"]);
+const LINK_CHECK_EXTENSIONS = new Set([
+  ".html",
+  ".json",
+  ".jsonc",
+  ".md",
+  ".toml",
+  ".tpl",
+  ".yaml",
+  ".yml",
+]);
+const FALLBACK_SCAN_DIRS = ["docs", "config", "template-sources", "templates"] as const;
+const GIT_LINK_CHECK_PATTERNS = [...LINK_CHECK_EXTENSIONS].map((extension) => `*${extension}`);
+const LYCHEE_EXCLUDE_ARGS = [
+  "--exclude-loopback",
+  "--exclude",
+  "^http://127\\.0\\.0\\.1(?::(?:\\d+|\\$\\{[^}]+\\}))?(?:/.*)?$",
+] as const;
 const LINK_PATTERN = /\]\([^)]+\)|\bhref\s*=/i;
 
 function normalizePath(filePath: string): string {
   return filePath.replaceAll("\\", "/");
+}
+
+function extensionForPath(relativePath: string): string {
+  return relativePath.includes(".") ? relativePath.slice(relativePath.lastIndexOf(".")) : "";
+}
+
+function isLinkCheckFile(filePath: string): boolean {
+  return LINK_CHECK_EXTENSIONS.has(extensionForPath(normalizePath(filePath)));
 }
 
 function walkDocs(dir: string, root = dir): string[] {
@@ -20,30 +44,57 @@ function walkDocs(dir: string, root = dir): string[] {
     }
 
     const relativePath = normalizePath(fullPath.slice(root.length + 1));
-    const extension = relativePath.includes(".")
-      ? relativePath.slice(relativePath.lastIndexOf("."))
-      : "";
-    if (DOC_EXTENSIONS.has(extension)) {
+    if (isLinkCheckFile(relativePath)) {
       results.push(relativePath);
     }
   }
   return results;
 }
 
-export function collectLinkCheckFiles(root = process.cwd()): string[] {
+function collectGitLinkCheckFiles(root: string): string[] | null {
+  const result = Bun.spawnSync(
+    ["git", "ls-files", "-co", "--exclude-standard", "--", ...GIT_LINK_CHECK_PATTERNS],
+    {
+      cwd: root,
+      stdout: "pipe",
+      stderr: "ignore",
+    },
+  );
+
+  if (result.exitCode !== 0) {
+    return null;
+  }
+
+  return result.stdout
+    .toString()
+    .split("\n")
+    .map((file) => normalizePath(file.trim()))
+    .filter((file) => file.length > 0 && isLinkCheckFile(file));
+}
+
+function collectFallbackLinkCheckFiles(root: string): string[] {
   const files = new Set<string>();
 
-  const readmePath = join(root, "README.md");
-  if (existsSync(readmePath)) {
-    files.add("README.md");
-  }
-
-  const docsPath = join(root, "docs");
-  if (existsSync(docsPath)) {
-    for (const file of walkDocs(docsPath, root)) {
-      files.add(file);
+  for (const rootFile of ["README.md", "CHANGELOG.md", "package.json"]) {
+    if (existsSync(join(root, rootFile))) {
+      files.add(rootFile);
     }
   }
+
+  for (const dir of FALLBACK_SCAN_DIRS) {
+    const path = join(root, dir);
+    if (existsSync(path)) {
+      for (const file of walkDocs(path, root)) {
+        files.add(file);
+      }
+    }
+  }
+
+  return [...files];
+}
+
+export function collectLinkCheckFiles(root = process.cwd()): string[] {
+  const files = new Set(collectGitLinkCheckFiles(root) ?? collectFallbackLinkCheckFiles(root));
 
   return [...files].toSorted((left, right) => left.localeCompare(right));
 }
@@ -56,7 +107,7 @@ function main(): void {
   const files = collectLinkCheckFiles();
 
   if (files.length === 0) {
-    console.error("Local link checking expected README.md or docs/**/*.{md,html}, but found none.");
+    console.error("Local link checking expected at least one Git-visible documentation file.");
     process.exit(1);
   }
 
@@ -67,7 +118,7 @@ function main(): void {
 
   if (versionCheck.exitCode !== 0) {
     if (!filesContainLinks(files)) {
-      console.log("No links found in README/docs; skipping lychee.");
+      console.log("No links found in Git-visible documentation files; skipping lychee.");
       process.exit(0);
     }
     console.error("Lychee is required for local checks. Run `mise install` from the repo root.");
@@ -86,6 +137,7 @@ function main(): void {
       "compact",
       "--root-dir",
       ".",
+      ...LYCHEE_EXCLUDE_ARGS,
       ...files,
     ],
     { stdout: "inherit", stderr: "inherit" },

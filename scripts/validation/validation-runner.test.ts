@@ -302,8 +302,10 @@ describe("generated validation callers", () => {
   test("stop validation does not call hidden base leaves as package scripts", () => {
     const content = readFileSync(join(root, "base/scripts/validation/validate-on-stop.ts"), "utf8");
 
-    expect(content).toContain('runGeneratedStep("typecheck", projectRoot, errors)');
-    expect(content).toContain('runGeneratedStep("test", projectRoot, errors)');
+    expect(content).toContain('"typecheck"');
+    expect(content).toContain('"test"');
+    expect(content).toContain("runReadOnlyStopSteps(steps, projectRoot, errors");
+    expect(content).toContain("runGeneratedValidationStep(step, cwd)");
     expect(content).not.toContain('"bun", "run", "--silent", "lint:errors"');
     expect(content).not.toContain('"bun", "run", "--silent", "format:check"');
     expect(content).not.toContain('"bun", "run", "--silent", "typecheck:frontend"');

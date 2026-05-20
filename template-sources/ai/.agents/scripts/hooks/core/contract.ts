@@ -25,9 +25,14 @@ export type CommandResult = {
   readonly stderr: string;
 };
 
+export type CommandRunnerOptions = {
+  readonly cwd: string;
+  readonly env?: Readonly<Record<string, string | undefined>>;
+};
+
 export type CommandRunner = (
   command: readonly string[],
-  options: { readonly cwd: string },
+  options: CommandRunnerOptions,
 ) => Promise<CommandResult>;
 
 export type UpdatedFileSnapshot = {

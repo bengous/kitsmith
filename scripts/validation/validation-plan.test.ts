@@ -216,7 +216,7 @@ test("live stop policy stays targeted to check-level steps", () => {
   }
 });
 
-test("maintainer validation docs map old commands to target lanes", () => {
+test("maintainer validation docs map old commands and delegate domain-specific contracts", () => {
   const docs = readFileSync("docs/maintainer-validation.md", "utf8");
   for (const expected of [
     "| `validate` | `validate` |",
@@ -244,7 +244,8 @@ test("maintainer validation docs map old commands to target lanes", () => {
   expect(docs).toContain("publish, tag, push");
   expect(docs).toContain("Internal leaves");
   expect(docs).toContain("Generated Dependency Baseline");
-  expect(docs).toContain("generated-dependencies:sync");
+  expect(docs).toContain("docs/generated-dependencies/CONTRACT.md");
+  expect(docs).toContain("docs/generated-dependencies/UBIQUITOUS_LANGUAGE.md");
   expect(docs).toContain("generated-dependencies:check");
 });
 

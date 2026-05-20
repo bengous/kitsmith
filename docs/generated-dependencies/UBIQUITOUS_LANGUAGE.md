@@ -1,4 +1,8 @@
-# Ubiquitous Language
+# Generated Dependencies Ubiquitous Language
+
+This glossary defines the local language for the generated npm dependency model. Validation lane
+names such as **Check Lane**, **Generated Lane**, and **Sandbox Lane** are defined in
+[`../validation/UBIQUITOUS_LANGUAGE.md`](../validation/UBIQUITOUS_LANGUAGE.md).
 
 ## Generated dependency model
 
@@ -14,7 +18,7 @@
 | **Condition** | A generated project shape requirement that controls when a dependency is emitted. | Preset flag, gate |
 | **Compatibility Group** | A named maintainer invariant for generated dependencies that must be reviewed together because they have a real compatibility relationship. | Coupled deps, dependency family, package category |
 | **Compatibility Policy** | The rule that explains why a compatibility group exists and how it is checked. | Group type, group reason |
-| **Same-Major Policy** | A compatibility policy requiring every package in the group to share one SemVer major. | Major alignment, same version family |
+| **Same-Major Policy** | A compatibility policy requiring every package in the group to share the same first dot-separated version component. | Major alignment, same version family |
 | **Review-Together Policy** | A compatibility policy requiring grouped package bumps to be reviewed as one coupled set when no simple machine rule exists. | Manual group, soft group |
 
 ## Source and artifact model
@@ -29,14 +33,11 @@
 | **Artifact Drift** | A mismatch between the Pkl source and the generated dependency artifact. | Generated drift, stale output |
 | **Lockfile** | The package-manager artifact that records exact installed dependency resolutions for the repo. | Baseline, source of truth |
 
-## Validation workflow
+## Maintainer workflow
 
 | Term | Definition | Aliases to avoid |
 | --- | --- | --- |
 | **Bump Workflow** | The maintainer flow for changing dependency versions, regenerating artifacts, validating, and committing the complete change. | Batch update, dependency update |
-| **Fast Check Lane** | The local read-only validation lane intended to catch core drift before commit. | Check, quick validate |
-| **Generated Validation Lane** | The validation lane that verifies the generated project product contract. | Contract tests, generated tests |
-| **Sandbox Validation Lane** | The validation lane that installs and executes generated projects in disposable sandboxes. | Smoke tests, deep tests |
 
 ## Relationships
 
@@ -53,31 +54,13 @@
 - **Parent Drift** is detected by **Check**, not repaired automatically by **Sync**.
 - A **Lockfile** belongs to package-manager reproducibility and is not a **Generated Dependency Baseline**.
 
-## Example dialogue
-
-> **Dev:** "When I bump `oxlint` in the parent repo, do I edit the **Generated Dependency Baseline** too?"
->
-> **Domain expert:** "Yes, if `oxlint` is a **Shared Dependency**. The **Check** should fail until the **Pkl Source** and the **Parent Dependency** agree."
->
-> **Dev:** "Then does **Sync** copy the parent version into Pkl automatically?"
->
-> **Domain expert:** "No. **Sync** only regenerates the **Generated Dependency Artifact** from the **Pkl Source**. A human or agent must make the product decision explicitly."
->
-> **Dev:** "And `bun.lock`?"
->
-> **Domain expert:** "That is a **Lockfile**, not the **Generated Dependency Baseline**. It must be tracked, but it does not define what Kitsmith emits."
->
-> **Dev:** "Can I put all frontend tools in one **Compatibility Group**?"
->
-> **Domain expert:** "No. A **Compatibility Group** needs a real **Compatibility Policy**. Use **Same-Major Policy** when the rule is machine-checkable, or **Review-Together Policy** when the packages are coupled but require human review."
-
 ## Flagged ambiguities
 
 - "Baseline" is too vague by itself. Prefer **Generated Dependency Baseline** when referring to the Pkl-owned product definition.
 - "Dependency" can mean **Parent Dependency** or **Generated Dependency**. State which one when discussing drift.
 - "Emission" by itself is too vague. Prefer **Dependency Emission** in docs and errors.
 - "Sync" must not mean "copy parent versions into Pkl". It means regenerating the **Generated Dependency Artifact** from the **Pkl Source**.
-- "Check" and "validate" were used interchangeably. Prefer **Check** for this read-only invariant and reserve validation lane names for broader command groups.
+- "Check" and "validate" were used interchangeably. Prefer **Check** for this read-only invariant and use the global lane names for broader command groups.
 - "Frontend dependency" can mean a **Scaffold-Only Dependency** or a **Shared Dependency** emitted to `frontend.*`; use **Dependency Target** plus ownership term.
 - `bun.lock` is tracked, but it is a **Lockfile**, not a dependency baseline or product source of truth.
 - "Compatibility Group" must not mean "category". It is a maintainer invariant for coupled generated dependencies, and every group must have a clear **Compatibility Policy**.

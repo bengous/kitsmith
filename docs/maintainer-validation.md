@@ -1,10 +1,10 @@
 # Maintainer Validation
 
 Kitsmith keeps the maintainer command surface separate from generated-project
-commands. Public maintainer lanes are short entrypoints; validation membership
+commands. Public validation lanes are short entrypoints; validation membership
 lives in `scripts/validation/validation-plan.ts`.
 
-## Lanes
+## Validation Lanes
 
 | Lane | Use | Notes |
 | --- | --- | --- |
@@ -14,47 +14,25 @@ lives in `scripts/validation/validation-plan.ts`.
 | `bun run validate:deep` | Daily gate plus slower local analysis. | Adds dead-code, duplicate-code, GitHub Actions, and local link checks without sandbox or release work. |
 | `bun run validate:generated` | Host-safe generated-project contract checks. | Covers generated package scripts, emitted files, docs, template contracts, and non-sandbox generation scenarios. |
 | `bun run validate:sandbox` | Sandbox, network, install, supply-chain, and smoke checks. | Uses e2e/safe-install/smoke scenarios outside the fast host-safe gates; `test:e2e-contract` and `test:safe-install` require Linux/bubblewrap. |
-| `bun run release:prepare` | Maintainer release artifact preparation. | Runs release-only checks, scriptless `npm pack`, no-network tarball inspection, manifest writing, and tarball smoke; never runs inside validation lanes. |
+
+## Related Release Gate
+
+`bun run release:prepare` is documented in
+[`docs/maintainer-release.md`](./maintainer-release.md). It runs release-only checks, scriptless
+`npm pack`, no-network tarball inspection, manifest writing, and tarball smoke; it is not a
+validation lane.
 
 ## Generated Dependency Baseline
 
-The domain language for this model lives in
-[`config/generated-dependencies/UBIQUITOUS_LANGUAGE.md`](../config/generated-dependencies/UBIQUITOUS_LANGUAGE.md).
-
-Generated npm dependency versions are authored in
-`config/generated-dependencies/baseline.pkl` and consumed at runtime through the
-committed TypeScript artifact `src/core/generated-dependencies.generated.ts`.
-Use `bun run generated-dependencies:sync` after editing the Pkl source, then
-`bun run generated-dependencies:check` to verify Pkl evaluation, artifact
-freshness, compatibility groups, and shared parent dependency drift.
+The generated dependency contract lives in
+[`docs/generated-dependencies/CONTRACT.md`](./generated-dependencies/CONTRACT.md);
+the domain terms live in
+[`docs/generated-dependencies/UBIQUITOUS_LANGUAGE.md`](./generated-dependencies/UBIQUITOUS_LANGUAGE.md).
 
 `generated-dependencies:check` is part of `check`, `validate`, and
 `validate:deep`. `validate:generated` runs it as an ordered prerequisite before
 generated project contract tests so stale dependency artifacts cannot be
 validated by the same generated contract lane.
-
-Pkl is a maintainer tool only. It is installed through the root `mise.toml` for
-local validation and CI, and it must not be emitted into generated project tool
-configuration.
-
-### Compatibility Groups
-
-A Compatibility Group is a maintainer invariant for generated dependencies that
-must be reviewed together because they have a real compatibility relationship.
-It is not a package category, a cosmetic grouping, or a place to collect
-packages that merely feel related.
-
-Create a Compatibility Group only when one of these policies applies:
-
-- `same-major`: all listed packages must share the same SemVer major.
-- `review-together`: no simple machine rule exists, but version bumps must be
-  reviewed as one coupled set.
-
-Group membership is deliberately explicit in both directions. A package that
-declares `compatibilityGroup = "react-types"` must be listed in
-`compatibilityGroups["react-types"].packages`, and every package listed in that
-group must declare the same `compatibilityGroup`. `bun install` does not enforce
-this contract; `bun run generated-dependencies:check` does.
 
 `validate:generated` may create temporary projects under the OS temp directory.
 It must not run bubblewrap sandboxes, network-enabled e2e scenarios,

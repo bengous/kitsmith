@@ -252,7 +252,7 @@ describe("generated dependency baseline validation", () => {
           },
         },
       }),
-    ).toThrow("same-major packages do not share one major version");
+    ).toThrow("same-major packages do not share one first dot-separated version component");
   });
 
   test("enforces bidirectional reference checks between packages and compatibility groups", () => {

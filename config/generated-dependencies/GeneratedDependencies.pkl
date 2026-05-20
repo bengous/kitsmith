@@ -1,6 +1,6 @@
 module GeneratedDependencies
 
-/// Domain terms for this model are defined in ./UBIQUITOUS_LANGUAGE.md.
+/// Domain terms for this model are defined in ../../docs/generated-dependencies/UBIQUITOUS_LANGUAGE.md.
 class Baseline {
   packages: Mapping<String, GeneratedDependency>
 
@@ -36,7 +36,7 @@ class Conditions {
 
 class CompatibilityGroup {
   /// Supported policies:
-  /// - "same-major": all listed packages must share the same SemVer major.
+  /// - "same-major": all listed packages must share the same first dot-separated version component.
   /// - "review-together": no simple machine rule exists, but version bumps must
   ///   be reviewed as one coupled set.
   policy: String

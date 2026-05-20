@@ -244,7 +244,6 @@ async function assertRootContract(
   await assertFileContains(root, validationPlanPath, "GENERATED_PROJECT_VALIDATE_PLAN");
   await assertFileContains(root, validationPlanPath, "GENERATED_PROJECT_PUSH_VALIDATION_POLICY");
   await assertFileContains(root, validationPlanPath, "build:frontend");
-  await assertFileExcludes(root, validationPlanPath, "validate:frontend");
   await assertFileExcludes(root, validationPlanPath, "guard-destructive:check");
   await assertFileExcludes(root, validationPlanPath, "test:project-contract");
 }
@@ -532,7 +531,6 @@ async function assertFrontendContract(
     await assertFileExcludes(root, "lefthook.yml", "frontend-oxc:");
     await assertFileExcludes(root, "lefthook.yml", "apps/frontend/**/*.{ts,tsx}");
     assertUndefined(packageJson["workspaces"], "workspaces");
-    assertUndefined(packageScripts["validate:frontend"], "validate:frontend script");
     assertUndefined(packageScripts["build"], "root build script");
     return;
   }
@@ -546,7 +544,6 @@ async function assertFrontendContract(
     throw new Error('Expected root workspaces to equal ["apps/*"] for TanStack scenario');
   }
   assertEqual(packageScripts["build"], contract.packageJson.scripts["build"], "root build script");
-  assertUndefined(packageScripts["validate:frontend"], "validate:frontend script");
   assertUndefined(packageScripts["test:e2e"], "test:e2e script");
   assertUndefined(packageScripts["build:frontend"], "build:frontend script");
   assertUndefined(packageScripts["typecheck:frontend"], "typecheck:frontend script");

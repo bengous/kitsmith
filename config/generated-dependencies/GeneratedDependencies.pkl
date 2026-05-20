@@ -1,6 +1,6 @@
 module GeneratedDependencies
 
-/// Domain terms for this model are defined in ../../docs/generated-dependencies/UBIQUITOUS_LANGUAGE.md.
+/// Domain terms for this model are defined in ../../docs/product/generated-dependencies/UBIQUITOUS_LANGUAGE.md.
 class Baseline {
   packages: Mapping<String, GeneratedDependency>
 

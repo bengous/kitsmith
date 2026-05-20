@@ -24,7 +24,7 @@ import { repoRelativePath } from "./repo-path.ts";
 const generatedPresence = { backend: true, frontend: true } as const;
 
 describe("format-and-lint hook input parsing", () => {
-  test("keeps single file path compatibility", () => {
+  test("parses single-file tool payload", () => {
     expect(parseFilePath('{"tool_input":{"file_path":"src/index.ts"}}')).toBe("src/index.ts");
   });
 

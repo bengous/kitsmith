@@ -106,10 +106,10 @@ function toPosixPath(path: string): string {
 }
 
 export type Manifest = {
-  readonly version?: 1 | 2;
+  readonly version: 2;
   readonly generated: string[];
-  readonly outputs?: Record<string, ManifestOutput>;
-  readonly sources?: Record<string, ManifestSource>;
+  readonly outputs: Record<string, ManifestOutput>;
+  readonly sources: Record<string, ManifestSource>;
 };
 
 export type ManifestOutput = {
@@ -136,13 +136,65 @@ type AgentsMdGenerationPlan = {
   readonly preserveExistingRoot: boolean;
 };
 
+type ManifestReadResult = {
+  readonly manifest: Manifest;
+  readonly recoveredGeneratedPaths: readonly string[];
+};
+
+type ManifestShape = {
+  readonly version: unknown;
+  readonly generated: unknown;
+  readonly outputs: unknown;
+  readonly sources: unknown;
+};
+
 function isManifest(value: unknown): value is Manifest {
-  if (typeof value !== "object" || value === null || !("generated" in value)) {
+  if (!isManifestShape(value) || value.version !== 2) {
     return false;
   }
 
-  const generated = value["generated"];
-  return Array.isArray(generated) && generated.every((entry) => typeof entry === "string");
+  return (
+    Array.isArray(value.generated) &&
+    value.generated.every((entry) => typeof entry === "string") &&
+    isManifestOutputRecord(value.outputs) &&
+    isManifestSourceRecord(value.sources)
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isManifestShape(value: unknown): value is ManifestShape {
+  return (
+    isRecord(value) &&
+    "version" in value &&
+    "generated" in value &&
+    "outputs" in value &&
+    "sources" in value
+  );
+}
+
+function isManifestOutputRecord(value: unknown): value is Record<string, ManifestOutput> {
+  return (
+    isRecord(value) &&
+    Object.values(value).every(
+      (output) =>
+        isRecord(output) &&
+        (output["kind"] === "root" || output["kind"] === "layer") &&
+        typeof output["checksum"] === "string" &&
+        (output["sourcePath"] === undefined || typeof output["sourcePath"] === "string"),
+    )
+  );
+}
+
+function isManifestSourceRecord(value: unknown): value is Record<string, ManifestSource> {
+  return (
+    isRecord(value) &&
+    Object.values(value).every(
+      (source) => isRecord(source) && typeof source["checksum"] === "string",
+    )
+  );
 }
 
 function checksum(content: string): string {
@@ -153,11 +205,13 @@ function outputKind(path: string): ManifestOutput["kind"] {
   return path === ROOT_AGENTS_MD ? "root" : "layer";
 }
 
+function emptyManifest(generated: string[] = []): Manifest {
+  return { version: 2, generated, outputs: {}, sources: {} };
+}
+
 export function generatedPathsFromManifest(manifest: Manifest): string[] {
-  const outputPaths =
-    manifest.outputs === undefined ? [] : Object.keys(manifest.outputs).map(toPosixPath);
-  return [...new Set([...manifest.generated.map(toPosixPath), ...outputPaths])].toSorted(
-    (left, right) => left.localeCompare(right),
+  return [...new Set(manifest.generated.map(toPosixPath))].toSorted((left, right) =>
+    left.localeCompare(right),
   );
 }
 
@@ -324,18 +378,45 @@ async function listManagedAgentsPaths(includeRoot: boolean): Promise<string[]> {
   return [...new Set(paths)].toSorted();
 }
 
-async function readManifest(): Promise<Manifest> {
+async function readManifest(): Promise<ManifestReadResult> {
   const file = Bun.file(MANIFEST_PATH);
   if (!(await file.exists())) {
-    return { generated: [] };
+    return { manifest: emptyManifest(), recoveredGeneratedPaths: [] };
   }
 
   const parsed = (await file.json()) as unknown;
   if (!isManifest(parsed)) {
-    throw new Error(`${MANIFEST_PATH}: invalid manifest shape`);
+    return {
+      manifest: emptyManifest(),
+      recoveredGeneratedPaths: recoverGeneratedAgentsPathsFromInvalidManifest(parsed),
+    };
   }
 
-  return parsed;
+  return { manifest: parsed, recoveredGeneratedPaths: [] };
+}
+
+function recoverGeneratedAgentsPathsFromInvalidManifest(value: unknown): string[] {
+  if (!isRecord(value)) {
+    return [];
+  }
+
+  const generated = value["generated"];
+  if (!Array.isArray(generated) || !generated.every((entry) => typeof entry === "string")) {
+    return [];
+  }
+
+  return [...new Set(generated.map(toPosixPath).filter(isRecoverableGeneratedAgentsPath))].toSorted(
+    (left, right) => left.localeCompare(right),
+  );
+}
+
+function isRecoverableGeneratedAgentsPath(path: string): boolean {
+  return (
+    path.endsWith(`/${ROOT_AGENTS_MD}`) &&
+    !path.startsWith("/") &&
+    !/^[A-Za-z]:\//.test(path) &&
+    !path.split("/").includes("..")
+  );
 }
 
 async function buildDirectoryMap(): Promise<{
@@ -379,6 +460,7 @@ async function buildDirectoryMap(): Promise<{
 function buildAgentsMdGenerationPlan(input: {
   readonly dirToRules: ReadonlyMap<string, readonly Rule[]>;
   readonly oldManifest: Manifest;
+  readonly recoveredGeneratedPaths: readonly string[];
   readonly rootContent: string;
   readonly sourceContentByPath: ReadonlyMap<string, string>;
   readonly preserveExistingRoot: boolean;
@@ -412,7 +494,14 @@ function buildAgentsMdGenerationPlan(input: {
     sourceContentByPath,
     outputSourceByPath,
     targetPaths,
-    stale: generatedPathsFromManifest(input.oldManifest).filter((path) => !targetPaths.has(path)),
+    stale: [
+      ...new Set([
+        ...generatedPathsFromManifest(input.oldManifest),
+        ...input.recoveredGeneratedPaths,
+      ]),
+    ]
+      .filter((path) => !targetPaths.has(path))
+      .toSorted((left, right) => left.localeCompare(right)),
     preserveExistingRoot: input.preserveExistingRoot,
   };
 }
@@ -541,7 +630,7 @@ async function main(): Promise<void> {
   const { dirToRules, sourceContentByPath } = await buildDirectoryMap();
   const rootContent = normalizeNewlines(await Bun.file(ROOT_MD).text());
   sourceContentByPath.set(ROOT_MD, rootContent);
-  const oldManifest = await readManifest();
+  const { manifest: oldManifest, recoveredGeneratedPaths } = await readManifest();
   const rootAgentsFile = Bun.file(ROOT_AGENTS_MD);
   const rootExists = await rootAgentsFile.exists();
   const rootWasManaged = oldManifest.generated.includes(ROOT_AGENTS_MD);
@@ -549,6 +638,7 @@ async function main(): Promise<void> {
   const plan = buildAgentsMdGenerationPlan({
     dirToRules,
     oldManifest,
+    recoveredGeneratedPaths,
     rootContent,
     sourceContentByPath,
     preserveExistingRoot,

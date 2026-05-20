@@ -11,7 +11,7 @@ tag, and push.
 - Release preparation: `scripts/release/prepare.ts`.
 - Tarball inspection: `scripts/release/inspect-tarball.ts`.
 - Tarball smoke support: `scripts/testing/tarball-smoke-sandbox.ts`.
-- Release docs: `docs/maintainer-release.md`.
+- Release docs: `docs/maintainer/release.md`.
 - Release workflow: `.github/workflows/release-prepare.yml`.
 - Cocogitto configuration: `cog.toml`.
 
@@ -60,7 +60,7 @@ tag, and push.
 
 10. Release preparation does not publish, tag, or push.
 
-    Evidence: `docs/maintainer-release.md` and the final `release:prepare` log message.
+    Evidence: `docs/maintainer/release.md` and the final `release:prepare` log message.
 
 11. The GitHub release-prepare workflow installs Pkl and Cocogitto through mise, installs Bun and
     bubblewrap, installs dependencies with the frozen lockfile, and runs `bun run release:prepare`.
@@ -70,7 +70,7 @@ tag, and push.
 ## Commands
 
 - `bun run release:prepare`
-- Debug commands documented in `docs/maintainer-release.md`: `cog check`,
+- Debug commands documented in `docs/maintainer/release.md`: `cog check`,
   `cog changelog <range>`, and `cog bump --auto --dry-run`.
 
 ## Non-Responsibilities

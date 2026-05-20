@@ -151,34 +151,26 @@ describe("manifest metadata", () => {
     expect(manifest.sources?.["CLAUDE.md"]?.checksum).toStartWith("sha256-");
   });
 
-  test("reads generated paths from legacy v1 and v2 outputs", () => {
+  test("reads generated paths from the v2 manifest generated list", () => {
     expect(
       generatedPathsFromManifest({
+        version: 2,
         generated: ["AGENTS.md", "scripts\\AGENTS.md"],
-        outputs: {
-          "src\\AGENTS.md": {
-            kind: "layer",
-            checksum: "sha256-test",
-            sourcePath: ".claude/rules/src.md",
-          },
-        },
+        outputs: {},
+        sources: {},
       }),
-    ).toEqual(["AGENTS.md", "scripts/AGENTS.md", "src/AGENTS.md"]);
+    ).toEqual(["AGENTS.md", "scripts/AGENTS.md"]);
   });
 
   test("generated preset normalizes manifest paths", () => {
     expect(
       generatedPresetPathsFromManifest({
+        version: 2,
         generated: ["AGENTS.md", "scripts\\AGENTS.md"],
-        outputs: {
-          "src\\AGENTS.md": {
-            kind: "layer",
-            checksum: "sha256-test",
-            sourcePath: ".claude/rules/src.md",
-          },
-        },
+        outputs: {},
+        sources: {},
       }),
-    ).toEqual(["AGENTS.md", "scripts/AGENTS.md", "src/AGENTS.md"]);
+    ).toEqual(["AGENTS.md", "scripts/AGENTS.md"]);
   });
 });
 
@@ -350,6 +342,42 @@ describe("integration: sandbox project", () => {
   test("--check exits 0 after --write", () => {
     const { exitCode } = runScript(dir, "--check");
     expect(exitCode).toBe(0);
+  });
+
+  test("--check rejects manifests without the v2 metadata contract", async () => {
+    await Bun.write(
+      `${dir}/.agents/agents-md-manifest.json`,
+      JSON.stringify({ generated: ["AGENTS.md"] }, null, "\t"),
+    );
+
+    const { exitCode, stderr } = runScript(dir, "--check");
+    expect(exitCode).toBe(1);
+    expect(stderr).toContain("invalid manifest shape");
+
+    runScript(dir, "--write");
+  });
+
+  test("--write removes stale paths listed by an invalid manifest", async () => {
+    await $`mkdir -p ${dir}/docs`.quiet();
+    await Bun.write(`${dir}/docs/AGENTS.md`, "# Old generated content\n");
+    await Bun.write(`${dir}/README.md`, "# Project README\n");
+    await Bun.write(
+      `${dir}/.agents/agents-md-manifest.json`,
+      JSON.stringify(
+        {
+          generated: ["AGENTS.md", "docs/AGENTS.md", "README.md", "../AGENTS.md", "/tmp/AGENTS.md"],
+        },
+        null,
+        "\t",
+      ),
+    );
+
+    const { exitCode, stdout, stderr } = runScript(dir, "--write");
+    expect(exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("removed stale docs/AGENTS.md");
+    expect(await Bun.file(`${dir}/docs/AGENTS.md`).exists()).toBe(false);
+    expect(await Bun.file(`${dir}/README.md`).text()).toBe("# Project README\n");
   });
 
   test("root AGENTS.md mirrors CLAUDE.md", async () => {
@@ -538,5 +566,25 @@ describe.if(canCreateSymlinks)("integration: preserve root mode", () => {
 
     expect(generated).not.toContain("AGENTS.md");
     expect(generated).toContain("src/AGENTS.md");
+  });
+
+  test("--write --preserve-root keeps root ownership when repairing an invalid manifest", async () => {
+    await $`mkdir -p ${dir}/docs`.quiet();
+    await Bun.write(`${dir}/docs/AGENTS.md`, "# Old generated content\n");
+    await Bun.write(
+      `${dir}/.agents/agents-md-manifest.json`,
+      JSON.stringify({ generated: ["AGENTS.md", "docs/AGENTS.md"] }, null, "\t"),
+    );
+
+    const { exitCode, stdout, stderr } = runScript(dir, "--write", "--preserve-root");
+    expect(exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).not.toContain("wrote AGENTS.md");
+    expect(stdout).toContain("removed stale docs/AGENTS.md");
+    expect(await pathIsSymlink(`${dir}/AGENTS.md`)).toBe(true);
+    expect(await Bun.file(`${dir}/AI.md`).text()).toBe(
+      "## Existing Root\n\nProject-specific guidance.\n",
+    );
+    expect(await Bun.file(`${dir}/docs/AGENTS.md`).exists()).toBe(false);
   });
 });

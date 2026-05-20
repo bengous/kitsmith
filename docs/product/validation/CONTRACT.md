@@ -18,7 +18,7 @@ validation, scope-aware stop/pre-push hooks, CI validation jobs, and validation 
 - Sandbox testing: `scripts/testing/sandbox-runner.ts`, `scripts/testing/e2e-contract.ts`,
   `scripts/testing/safe-install-smoke.ts`, `scripts/testing/smoke.ts`.
 - CI: `.github/workflows/ci.yml`.
-- Maintainer docs: `docs/maintainer-validation.md`.
+- Maintainer docs: `docs/maintainer/validation.md`.
 
 ## Invariants
 
@@ -40,7 +40,7 @@ validation, scope-aware stop/pre-push hooks, CI validation jobs, and validation 
 4. `validate:deep` extends `validate` with dead-code, duplicate-code, GitHub Actions, GitHub
    Actions security, and local link checks.
 
-   Evidence: `LIVE_DEEP_PLAN` and `docs/maintainer-validation.md`.
+   Evidence: `LIVE_DEEP_PLAN` and `docs/maintainer/validation.md`.
 
 5. `validate:generated` runs `generated-dependencies:check` as an ordered prerequisite before
    generated project contract tests.

@@ -74,7 +74,6 @@ describe("templateValues", () => {
     expect(values["AI_SCRIPTS"]).toContain('"agents:sync"');
     expect(values["AI_SCRIPTS"]).not.toContain('"agents:check"');
     expect(values["FRONTEND_SCRIPTS"]).toContain('"build"');
-    expect(values["FRONTEND_SCRIPTS"]).not.toContain('"validate:frontend"');
     expect(values["BIN_BLOCK"]).toBe("");
     expect(values["ROOT_LINT_PATHS"]).toBe(
       "scripts/ .agents/scripts/hooks/ .codex/hooks/ .claude/hooks/",
@@ -143,7 +142,6 @@ describe("renderTemplate", () => {
     expect(rendered).toContain(
       '"test": "bun run --cwd apps/frontend test && bun test ./.agents/scripts/hooks ./.codex/hooks ./.claude/hooks ./scripts/validation"',
     );
-    expect(rendered).not.toContain('"validate:frontend"');
     expect(rendered).not.toContain('"test:hooks"');
     expect(rendered).not.toContain('"agents:check"');
     expect(rendered).not.toContain("__");

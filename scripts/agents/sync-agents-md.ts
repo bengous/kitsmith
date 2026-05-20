@@ -215,6 +215,16 @@ export function generatedPathsFromManifest(manifest: Manifest): string[] {
   );
 }
 
+function staleCandidatesFromManifest(manifest: Manifest): string[] {
+  return [
+    ...new Set(
+      [...manifest.generated, ...Object.keys(manifest.outputs)]
+        .map(toPosixPath)
+        .filter(isManagedAgentsPath),
+    ),
+  ].toSorted((left, right) => left.localeCompare(right));
+}
+
 export function buildManifest(input: {
   readonly generated: ReadonlyMap<string, string>;
   readonly sourceContentByPath: ReadonlyMap<string, string>;
@@ -411,8 +421,12 @@ function recoverGeneratedAgentsPathsFromInvalidManifest(value: unknown): string[
 }
 
 function isRecoverableGeneratedAgentsPath(path: string): boolean {
+  return path.endsWith(`/${ROOT_AGENTS_MD}`) && isManagedAgentsPath(path);
+}
+
+function isManagedAgentsPath(path: string): boolean {
   return (
-    path.endsWith(`/${ROOT_AGENTS_MD}`) &&
+    (path === ROOT_AGENTS_MD || path.endsWith(`/${ROOT_AGENTS_MD}`)) &&
     !path.startsWith("/") &&
     !/^[A-Za-z]:\//.test(path) &&
     !path.split("/").includes("..")
@@ -496,7 +510,7 @@ function buildAgentsMdGenerationPlan(input: {
     targetPaths,
     stale: [
       ...new Set([
-        ...generatedPathsFromManifest(input.oldManifest),
+        ...staleCandidatesFromManifest(input.oldManifest),
         ...input.recoveredGeneratedPaths,
       ]),
     ]

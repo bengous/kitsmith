@@ -380,6 +380,30 @@ describe("integration: sandbox project", () => {
     expect(await Bun.file(`${dir}/README.md`).text()).toBe("# Project README\n");
   });
 
+  test("--write removes stale paths listed only in valid manifest outputs", async () => {
+    await $`mkdir -p ${dir}/docs`.quiet();
+    await Bun.write(`${dir}/docs/AGENTS.md`, "# Old generated content\n");
+    await Bun.write(`${dir}/README.md`, "# Project README\n");
+    const manifest = await readJsonObject(`${dir}/.agents/agents-md-manifest.json`);
+    const generated = stringArray(manifest["generated"]);
+    const outputs = {
+      "AGENTS.md": { kind: "root", checksum: "sha256-root" },
+      "docs/AGENTS.md": { kind: "layer", checksum: "sha256-stale" },
+      "README.md": { kind: "layer", checksum: "sha256-not-managed-agents" },
+    };
+    await Bun.write(
+      `${dir}/.agents/agents-md-manifest.json`,
+      JSON.stringify({ version: 2, generated, outputs, sources: {} }, null, "\t"),
+    );
+
+    const { exitCode, stdout, stderr } = runScript(dir, "--write");
+    expect(exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("removed stale docs/AGENTS.md");
+    expect(await Bun.file(`${dir}/docs/AGENTS.md`).exists()).toBe(false);
+    expect(await Bun.file(`${dir}/README.md`).text()).toBe("# Project README\n");
+  });
+
   test("root AGENTS.md mirrors CLAUDE.md", async () => {
     const claudeMd = await Bun.file(`${dir}/CLAUDE.md`).text();
     const agentsMd = await Bun.file(`${dir}/AGENTS.md`).text();

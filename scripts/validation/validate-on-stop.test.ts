@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { stopValidationSteps } from "./validate-on-stop.ts";
+import { stopValidationFiles, stopValidationSteps } from "./validate-on-stop.ts";
 
 test("stop validation targets code changes with check-level steps", () => {
   expect(
@@ -36,5 +36,18 @@ test("stop validation includes config sync checks without deep or sandbox lanes"
     "generated-dependencies:check",
     "parent-tooling:check",
     "agents:check",
+  ]);
+});
+
+test("stop validation includes generated dependency Pkl files", () => {
+  expect(
+    stopValidationFiles([
+      "config/generated-dependencies/baseline.pkl",
+      "assets/brand/logo.png",
+      "src/core/generated-project-contract.ts",
+    ]),
+  ).toEqual([
+    "config/generated-dependencies/baseline.pkl",
+    "src/core/generated-project-contract.ts",
   ]);
 });

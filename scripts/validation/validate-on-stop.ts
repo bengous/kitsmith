@@ -58,6 +58,10 @@ export function stopValidationSteps(
   return steps;
 }
 
+export function stopValidationFiles(files: readonly string[]): string[] {
+  return files.filter((file) => CODE_PATTERN.test(file) || requiresGeneratedDependencyCheck(file));
+}
+
 function runStep(step: string, cwd: string, errors: string[]): void {
   const result = Bun.spawnSync(["bun", "run", "--silent", step], {
     cwd,
@@ -121,18 +125,18 @@ async function main(): Promise<void> {
 
   const projectRoot = resolveProjectRoot(import.meta.dir);
   const files = await getChangedFiles("working");
-  const codeFiles = files.filter((file) => CODE_PATTERN.test(file));
+  const validationFiles = stopValidationFiles(files);
 
-  if (codeFiles.length === 0) {
+  if (validationFiles.length === 0) {
     process.exit(0);
   }
 
-  const scopes = expandConfigScope(classifyScopes(codeFiles));
+  const scopes = expandConfigScope(classifyScopes(validationFiles));
   const errors: string[] = [];
   const steps = stopValidationSteps(scopes, {
     hasParentToolingCheck: await hasPackageScript(projectRoot, "parent-tooling:check"),
     hasAgentsCheck: await hasPackageScript(projectRoot, "agents:check"),
-    includeGeneratedDependenciesCheck: codeFiles.some((file) =>
+    includeGeneratedDependenciesCheck: validationFiles.some((file) =>
       requiresGeneratedDependencyCheck(file),
     ),
   });

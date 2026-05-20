@@ -56,6 +56,8 @@ test("live check plan is fast read-only and excludes deep, sandbox, and release 
   ]);
   expect(LIVE_CHECK_PLAN.defaultSteps).not.toContain("lint:dead");
   expect(LIVE_CHECK_PLAN.defaultSteps).not.toContain("lint:dupes");
+  expect(LIVE_CHECK_PLAN.defaultSteps).not.toContain("check:github-actions");
+  expect(LIVE_CHECK_PLAN.defaultSteps).not.toContain("check:github-actions-security");
   expect(LIVE_CHECK_PLAN.defaultSteps).not.toContain("check:links");
   for (const step of releaseAndSandboxSteps) {
     expect(LIVE_CHECK_PLAN.defaultSteps).not.toContain(step);
@@ -75,6 +77,8 @@ test("live deep, generated, sandbox, and release lanes stay separated", () => {
   }
   expect(LIVE_DEEP_PLAN.defaultSteps).toContain("lint:dead");
   expect(LIVE_DEEP_PLAN.defaultSteps).toContain("lint:dupes");
+  expect(LIVE_DEEP_PLAN.defaultSteps).toContain("check:github-actions");
+  expect(LIVE_DEEP_PLAN.defaultSteps).toContain("check:github-actions-security");
   expect(LIVE_DEEP_PLAN.defaultSteps).toContain("check:links");
   expect(LIVE_DEEP_PLAN.defaultSteps).not.toContain("test:e2e-contract");
   expect(LIVE_DEEP_PLAN.defaultSteps).not.toContain("test:safe-install");
@@ -189,6 +193,8 @@ test("live stop policy stays targeted to check-level steps", () => {
     "lint:audit",
     "lint:dead",
     "lint:dupes",
+    "check:github-actions",
+    "check:github-actions-security",
     "check:links",
   ]) {
     expect([
@@ -206,6 +212,8 @@ test("maintainer validation docs map old commands to target lanes", () => {
     "| `validate:scale` | removed |",
     "| `lint:dead` | `validate:deep` |",
     "| `lint:dupes` | `validate:deep` |",
+    "| `check:github-actions` | `validate:deep` |",
+    "| `check:github-actions-security` | `validate:deep` |",
     "| `check:links` | `validate:deep` |",
     "| `test:e2e-contract` | `validate:sandbox` |",
     "| `test:smoke` | `validate:sandbox` |",

@@ -11,7 +11,7 @@ lives in `scripts/validation/validation-plan.ts`.
 | `bun run autofix` | Apply mechanical fixes. | Mutating by design; run before read-only gates when you want the tree repaired. |
 | `bun run check` | Fast local read-only feedback. | Excludes deep, generated, sandbox, supply-chain, and release work. |
 | `bun run validate` | Daily complete read-only gate. | Includes `lint:arch` and the explicit `lint:audit` assignment. |
-| `bun run validate:deep` | Daily gate plus slower local analysis. | Adds dead-code, duplicate-code, and local link checks without sandbox or release work. |
+| `bun run validate:deep` | Daily gate plus slower local analysis. | Adds dead-code, duplicate-code, GitHub Actions, and local link checks without sandbox or release work. |
 | `bun run validate:generated` | Host-safe generated-project contract checks. | Covers generated package scripts, emitted files, docs, template contracts, and non-sandbox generation scenarios. |
 | `bun run validate:sandbox` | Sandbox, network, install, supply-chain, and smoke checks. | Uses e2e/safe-install/smoke scenarios outside the fast host-safe gates; `test:e2e-contract` and `test:safe-install` require Linux/bubblewrap. |
 | `bun run release:prepare` | Maintainer release artifact preparation. | Runs release-only checks, scriptless `npm pack`, no-network tarball inspection, manifest writing, and tarball smoke; never runs inside validation lanes. |
@@ -29,6 +29,32 @@ This lane must not publish, tag, push, prepare a release, run release package
 inspection, or execute tarball smoke; those release artifact checks stay in
 `release:prepare`.
 
+## GitHub Actions Hardening
+
+Workflow validation is intentionally repo-local and tool-based rather than a
+custom scanner. `check:github-actions` runs `actionlint` for workflow syntax and
+semantic mistakes. `check:github-actions-security` runs `zizmor --offline` for
+GitHub Actions security findings, including unpinned actions, risky token
+handling, and unsafe workflow patterns. `zizmor` is a dedicated static analyzer
+for GitHub Actions security; see <https://docs.zizmor.sh/>.
+
+External actions are pinned to full commit SHAs, with a trailing version comment
+such as `# v6` so humans and dependency automation can still see the intended
+release line. Dependabot owns updates for those GitHub Actions references via
+`.github/dependabot.yml`.
+
+## CI Reliability
+
+The sandbox lane is intentionally serialized in CI. It already starts nested
+bubblewrap sandboxes, generated-project installs, and frontend Playwright/Vite
+checks, so the workflow runs `validate --plan sandbox --jobs 1` and pins
+scenario-level smoke/e2e concurrency through `KITSMITH_SMOKE_JOBS` and
+`KITSMITH_E2E_CONTRACT_JOBS`.
+
+`release:prepare` depends on Cocogitto's `cog` binary for changelog and version
+checks. Keep Cocogitto pinned in `mise.toml` and installed in the manual
+release workflow before running the release preparation script.
+
 ## Migration Map
 
 | Previous/current command | Target lane | Status |
@@ -37,6 +63,8 @@ inspection, or execute tarball smoke; those release artifact checks stay in
 | `validate:scale` | removed | Replaced by explicit `validate:deep`, `validate:generated`, and `validate:sandbox` lanes; no legacy alias. |
 | `lint:dead` | `validate:deep` | Kept as an internal leaf. |
 | `lint:dupes` | `validate:deep` | Kept as an internal leaf. |
+| `check:github-actions` | `validate:deep` | Kept as an internal leaf. |
+| `check:github-actions-security` | `validate:deep` | Kept as an internal leaf. |
 | `check:links` | `validate:deep` | Kept as an internal leaf. |
 | `test:e2e-contract` | `validate:sandbox` | Kept as an internal leaf; requires Linux/bubblewrap and enables sandbox network. |
 | `test:smoke` | `validate:sandbox` | Kept as an internal leaf. |
@@ -48,6 +76,7 @@ inspection, or execute tarball smoke; those release artifact checks stay in
 ## Internal leaves
 
 The package can keep technical leaves such as `lint:dead`, `lint:dupes`,
-`check:links`, `test:e2e-contract`, `test:smoke`, `test:safe-install`, and the
-supply-chain probe for debugging and CI composition. They are implementation
-details of the maintainer lanes, not the primary mental model for daily work.
+`check:github-actions`, `check:github-actions-security`, `check:links`,
+`test:e2e-contract`, `test:smoke`, `test:safe-install`, and the supply-chain
+probe for debugging and CI composition. They are implementation details of the
+maintainer lanes, not the primary mental model for daily work.

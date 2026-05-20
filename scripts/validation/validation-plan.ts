@@ -31,7 +31,14 @@ export const LIVE_VALIDATE_PLAN: ValidationPlan = {
 };
 
 export const LIVE_DEEP_PLAN: ValidationPlan = {
-  defaultSteps: [...LIVE_VALIDATE_PLAN.defaultSteps, "lint:dead", "lint:dupes", "check:links"],
+  defaultSteps: [
+    ...LIVE_VALIDATE_PLAN.defaultSteps,
+    "lint:dead",
+    "lint:dupes",
+    "check:github-actions",
+    "check:github-actions-security",
+    "check:links",
+  ],
 };
 
 export const LIVE_GENERATED_PLAN: ValidationPlan = {

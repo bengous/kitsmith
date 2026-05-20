@@ -58,4 +58,6 @@
   ],
   // commitlint is invoked by the Git commit-msg hook.
   "ignoreDependencies": ["@commitlint/cli"],
+  // mise is the project tool manager; its pinned tools live in mise.toml.
+  "ignoreBinaries": ["mise"],
 }

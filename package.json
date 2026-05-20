@@ -67,6 +67,8 @@
     "agents:sync": "bun scripts/agents/sync-agents-md.ts --write",
     "agents:check": "bun scripts/agents/sync-agents-md.ts --check",
     "lint:audit": "bun scripts/quality/audit-oxlint-rules.ts",
+    "check:github-actions": "mise x actionlint@1.7.12 -- actionlint .github/workflows/ci.yml .github/workflows/release-prepare.yml",
+    "check:github-actions-security": "mise x zizmor@1.25.2 -- zizmor --offline .github/workflows",
     "check:links": "bun scripts/quality/check-links-local.ts",
     "release:prepare": "bun scripts/release/prepare.ts",
     "repo:bootstrap": "bun scripts/setup/bootstrap-git-config.ts",

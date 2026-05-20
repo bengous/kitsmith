@@ -1,4 +1,5 @@
 export type ValidationPlan = {
+  readonly orderedPrerequisites?: readonly string[];
   readonly defaultSteps: readonly string[];
 };
 
@@ -17,6 +18,7 @@ export type LiveStopValidationPolicy = {
 
 export const LIVE_CHECK_PLAN: ValidationPlan = {
   defaultSteps: [
+    "generated-dependencies:check",
     "parent-tooling:check",
     "agents:check",
     "format:check",
@@ -42,6 +44,7 @@ export const LIVE_DEEP_PLAN: ValidationPlan = {
 };
 
 export const LIVE_GENERATED_PLAN: ValidationPlan = {
+  orderedPrerequisites: ["generated-dependencies:check"],
   defaultSteps: ["test:project-contract"],
 };
 
@@ -52,8 +55,8 @@ export const LIVE_SANDBOX_PLAN: ValidationPlan = {
 export const LIVE_PUSH_VALIDATION_POLICY: LivePushValidationPolicy = {
   codeSteps: ["typecheck", "lint:errors", "format:check", "lint:arch", "test"],
   productFormatStep: "format:check",
-  productSteps: ["test:project-contract"],
-  configSteps: ["parent-tooling:check", "agents:check"],
+  productSteps: ["generated-dependencies:check", "test:project-contract"],
+  configSteps: ["generated-dependencies:check", "parent-tooling:check", "agents:check"],
 };
 
 export const LIVE_STOP_VALIDATION_POLICY: LiveStopValidationPolicy = {

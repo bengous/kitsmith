@@ -3,6 +3,7 @@
 import type { Scope } from "./detect-scope";
 import { CODE_PATTERN, classifyScopes, expandConfigScope, getChangedFiles } from "./detect-scope";
 import { resolveProjectRoot } from "./resolve-bin";
+import { requiresGeneratedDependencyCheck } from "./routing-policy.ts";
 import { LIVE_STOP_VALIDATION_POLICY } from "./validation-plan.ts";
 
 type StopHookInput = {
@@ -22,6 +23,7 @@ export function stopValidationSteps(
   options: {
     readonly hasParentToolingCheck: boolean;
     readonly hasAgentsCheck: boolean;
+    readonly includeGeneratedDependenciesCheck?: boolean;
   },
 ): string[] {
   const steps: string[] = [];
@@ -32,6 +34,10 @@ export function stopValidationSteps(
 
   if (scopes.has("product")) {
     addUnique(steps, LIVE_STOP_VALIDATION_POLICY.productSteps);
+  }
+
+  if (options.includeGeneratedDependenciesCheck) {
+    addUnique(steps, ["generated-dependencies:check"]);
   }
 
   if (scopes.has("config")) {
@@ -126,6 +132,9 @@ async function main(): Promise<void> {
   const steps = stopValidationSteps(scopes, {
     hasParentToolingCheck: await hasPackageScript(projectRoot, "parent-tooling:check"),
     hasAgentsCheck: await hasPackageScript(projectRoot, "agents:check"),
+    includeGeneratedDependenciesCheck: codeFiles.some((file) =>
+      requiresGeneratedDependencyCheck(file),
+    ),
   });
 
   for (const step of steps) {

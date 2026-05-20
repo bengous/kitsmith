@@ -1,6 +1,8 @@
 import type { FrontendPreset, InitOptions, TemplateContext } from "../types.ts";
+import type { GeneratedDependencySections } from "./generated-dependencies.ts";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { resolveGeneratedDependencySections } from "./generated-dependencies.ts";
 import { isJsonObject, parseJsonObject } from "./json.ts";
 import { TEMPLATE_SOURCES_DIR } from "./paths.ts";
 import { PRESETS } from "./presets.ts";
@@ -433,6 +435,7 @@ function testCommandForContext(context: TemplateContext): string {
 function packageJsonContractForContext(
   context: TemplateContext,
   rootTooling: RootToolingContract,
+  dependencySections: GeneratedDependencySections,
 ): PackageJsonContract {
   const lintPaths = rootTooling.lintPaths.join(" ");
   const formatGlobs = rootTooling.formatGlobs.join(" ");
@@ -461,30 +464,10 @@ function packageJsonContractForContext(
     ...(context.backend ? { bin: { [context.binName]: "./src/index.ts" } } : {}),
     ...(context.hasWorkspaces ? { workspaces: ["apps/*"] } : {}),
     scripts,
-    ...(context.effect
-      ? {
-          dependencies: {
-            "@effect/platform": "0.96.1",
-            "@effect/platform-bun": "0.89.0",
-            effect: "3.21.2",
-          },
-        }
+    ...(Object.keys(dependencySections.rootDependencies).length > 0
+      ? { dependencies: dependencySections.rootDependencies }
       : {}),
-    devDependencies: {
-      ...(context.effect ? { "@effect/language-service": "0.85.1" } : {}),
-      "@commitlint/cli": "21.0.1",
-      "@commitlint/config-conventional": "21.0.1",
-      "@types/bun": "1.3.14",
-      "dependency-cruiser": "17.4.0",
-      jscpd: "4.2.2",
-      knip: "6.14.1",
-      lefthook: "2.1.6",
-      oxfmt: "0.50.0",
-      oxlint: "1.65.0",
-      "oxlint-plugin-complexity": "2.1.2",
-      "oxlint-tsgolint": "0.22.1",
-      typescript: "6.0.3",
-    },
+    devDependencies: dependencySections.rootDevDependencies,
   };
 }
 
@@ -564,7 +547,10 @@ function rootToolingContractForContext(context: TemplateContext): RootToolingCon
   };
 }
 
-function frontendContractForContext(context: TemplateContext): FrontendContract {
+function frontendContractForContext(
+  context: TemplateContext,
+  dependencySections: GeneratedDependencySections,
+): FrontendContract {
   if (context.frontend !== "tanstack") {
     return { enabled: false };
   }
@@ -613,30 +599,8 @@ function frontendContractForContext(context: TemplateContext): FrontendContract 
         )} && oxfmt --write -c .oxfmtrc.jsonc ${formatPaths.join(" ")}`,
         preview: "vite preview",
       },
-      dependencies: {
-        "@tanstack/react-router": "1.169.2",
-        react: "19.2.6",
-        "react-dom": "19.2.6",
-      },
-      devDependencies: {
-        "@playwright/test": "1.59.1",
-        "@tanstack/router-plugin": "1.167.35",
-        "@testing-library/dom": "10.4.1",
-        "@testing-library/jest-dom": "6.9.1",
-        "@testing-library/react": "16.3.2",
-        "@types/node": "25.6.0",
-        "@types/react": "19.2.14",
-        "@types/react-dom": "19.2.3",
-        "@vitejs/plugin-react": "6.0.1",
-        jsdom: "29.1.1",
-        oxfmt: "0.50.0",
-        oxlint: "1.65.0",
-        "oxlint-tsgolint": "0.22.1",
-        stylelint: "17.11.0",
-        typescript: "6.0.3",
-        vite: "8.0.11",
-        vitest: "4.1.5",
-      },
+      dependencies: dependencySections.frontendDependencies,
+      devDependencies: dependencySections.frontendDevDependencies,
     },
   };
 }
@@ -647,6 +611,7 @@ export function buildGeneratedProjectContract(options: InitOptions): GeneratedPr
   const presetCopySpecs = presetCopySpecsForShape(shape);
   const templateRenderSpecs = templateRenderSpecsForShape(shape);
   const rootTooling = rootToolingContractForContext(templateContext);
+  const dependencySections = resolveGeneratedDependencySections(shape);
 
   return {
     shape,
@@ -663,9 +628,9 @@ export function buildGeneratedProjectContract(options: InitOptions): GeneratedPr
       templateRenderSpecs,
       shape,
     ),
-    packageJson: packageJsonContractForContext(templateContext, rootTooling),
+    packageJson: packageJsonContractForContext(templateContext, rootTooling, dependencySections),
     rootTooling,
-    frontend: frontendContractForContext(templateContext),
+    frontend: frontendContractForContext(templateContext, dependencySections),
   };
 }
 

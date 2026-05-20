@@ -7,7 +7,11 @@ import {
   resolveValidationStepCommand,
   runGeneratedValidationStep,
 } from "../../template-sources/base/scripts/validation/internal/validation-runner.ts";
-import { summarizeValidationResults } from "./validation-runner.ts";
+import {
+  collectValidationResults as collectLiveValidationResults,
+  summarizeValidationResults,
+  validationExecutionGroups,
+} from "./validation-runner.ts";
 
 function result(step: string, exit: number): ValidationResult {
   return { step, exit, output: "", ms: 1 };
@@ -34,6 +38,55 @@ describe("summarizeValidationResults", () => {
       passed: 0,
       failed: 0,
     });
+  });
+});
+
+describe("live validation runner ordering", () => {
+  test("keeps ordered prerequisites out of the concurrent step pool", () => {
+    expect(
+      validationExecutionGroups(
+        {
+          orderedPrerequisites: ["generated-dependencies:check"],
+          defaultSteps: ["test:project-contract"],
+        },
+        new Set(["generated-dependencies:check", "test:project-contract"]),
+      ),
+    ).toEqual({
+      orderedPrerequisites: ["generated-dependencies:check"],
+      concurrentSteps: ["test:project-contract"],
+    });
+  });
+
+  test("does not start concurrent generated contract tests when freshness fails", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "kitsmith-live-runner-"));
+    try {
+      writeFileSync(
+        join(dir, "package.json"),
+        JSON.stringify({
+          scripts: {
+            "generated-dependencies:check": "bun ./fail.ts",
+            "test:project-contract": "bun ./contract.ts",
+          },
+        }),
+      );
+      writeFileSync(join(dir, "fail.ts"), "process.exit(1);\n");
+      writeFileSync(join(dir, "contract.ts"), "await Bun.write('contract-ran.txt', 'yes');\n");
+
+      const results = await collectLiveValidationResults(
+        {
+          orderedPrerequisites: ["generated-dependencies:check"],
+          defaultSteps: ["test:project-contract"],
+        },
+        ["bun", "validate"],
+        dir,
+        false,
+      );
+
+      expect(results.map((entry) => entry.step)).toEqual(["generated-dependencies:check"]);
+      expect(existsSync(join(dir, "contract-ran.txt"))).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

@@ -1,4 +1,6 @@
 import { expect, test } from "bun:test";
+import { GENERATED_DEPENDENCY_PACKAGES } from "./generated-dependencies.generated.ts";
+import { resolveGeneratedDependencySections } from "./generated-dependencies.ts";
 import {
   buildGeneratedProjectContract,
   describeGeneratedProject,
@@ -36,12 +38,9 @@ test("buildGeneratedProjectContract models root and frontend package facts", () 
   );
   expect(contract.packageJson.scripts["agents:check"]).toBeUndefined();
   expect(contract.packageJson.scripts["effect:diagnose"]).toBeUndefined();
-  expect(contract.packageJson.dependencies).toEqual({
-    "@effect/platform": "0.96.1",
-    "@effect/platform-bun": "0.89.0",
-    effect: "3.21.2",
-  });
-  expect(contract.packageJson.devDependencies["@effect/language-service"]).toBe("0.85.1");
+  const dependencySections = resolveGeneratedDependencySections(contract.shape);
+  expect(contract.packageJson.dependencies ?? {}).toEqual(dependencySections.rootDependencies);
+  expect(contract.packageJson.devDependencies).toEqual(dependencySections.rootDevDependencies);
   expect(contract.rootTooling.tsconfigInclude).toEqual([
     "src/**/*.ts",
     "scripts/**/*.ts",
@@ -50,11 +49,12 @@ test("buildGeneratedProjectContract models root and frontend package facts", () 
     ".claude/hooks/**/*.ts",
   ]);
   expect(contract.rootTooling.lefthookTypecheckGlobs).toContain("apps/frontend/**/*.{ts,tsx}");
-  expect(contract.frontend.enabled && contract.frontend.packageJson.dependencies).toEqual({
-    "@tanstack/react-router": "1.169.2",
-    react: "19.2.6",
-    "react-dom": "19.2.6",
-  });
+  expect(contract.frontend.enabled && contract.frontend.packageJson.dependencies).toEqual(
+    dependencySections.frontendDependencies,
+  );
+  expect(contract.frontend.enabled && contract.frontend.packageJson.devDependencies).toEqual(
+    dependencySections.frontendDevDependencies,
+  );
 });
 
 test("describeGeneratedProject remains a compatibility projection", () => {
@@ -70,4 +70,21 @@ test("describeGeneratedProject remains a compatibility projection", () => {
     templateRenderSpecs: contract.templateRenderSpecs,
     generatedFileSpecs: contract.generatedFileSpecs,
   });
+});
+
+test("runtime dependency assembly does not hardcode generated dependency versions", async () => {
+  const sourceUrls = [
+    new URL("./generated-project-contract.ts", import.meta.url),
+    new URL("./template.ts", import.meta.url),
+  ];
+  const sources = await Promise.all(sourceUrls.map(async (url) => Bun.file(url).text()));
+  const generatedDependencyVersions = new Set(
+    Object.values(GENERATED_DEPENDENCY_PACKAGES).map((dependency) => dependency.version),
+  );
+
+  for (const version of generatedDependencyVersions) {
+    for (const source of sources) {
+      expect(source).not.toContain(`"${version}"`);
+    }
+  }
 });

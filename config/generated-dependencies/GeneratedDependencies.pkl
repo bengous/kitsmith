@@ -1,0 +1,47 @@
+module GeneratedDependencies
+
+/// Domain terms for this model are defined in ./UBIQUITOUS_LANGUAGE.md.
+class Baseline {
+  packages: Mapping<String, GeneratedDependency>
+
+  /// Named maintainer invariants for packages that must be reviewed together because
+  /// they have a real compatibility relationship. Do not use groups for broad
+  /// categories such as "frontend tooling" or "linters".
+  compatibilityGroups: Mapping<String, CompatibilityGroup> = new Mapping {}
+}
+
+class GeneratedDependency {
+  version: String
+  sharedWithParent: Boolean
+
+  /// Optional group membership. When present, this package must also be listed in
+  /// the matching CompatibilityGroup.packages entry.
+  compatibilityGroup: String? = null
+  emissions: Listing<DependencyEmission>
+}
+
+class DependencyEmission {
+  target: String
+
+  /// Missing conditions intentionally mean this Dependency Emission is always active.
+  conditions: Conditions? = null
+}
+
+class Conditions {
+  backend: Boolean? = null
+  frontend: String? = null
+  ai: Boolean? = null
+  effect: Boolean? = null
+}
+
+class CompatibilityGroup {
+  /// Supported policies:
+  /// - "same-major": all listed packages must share the same SemVer major.
+  /// - "review-together": no simple machine rule exists, but version bumps must
+  ///   be reviewed as one coupled set.
+  policy: String
+
+  /// Group membership must be bidirectional: every listed package must declare
+  /// this group through GeneratedDependency.compatibilityGroup.
+  packages: Listing<String>
+}

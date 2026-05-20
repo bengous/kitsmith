@@ -8,7 +8,11 @@ import {
   classifyRoutingPath as classifyGeneratedRoutingPath,
   resolveQualityWorkspace as resolveGeneratedQualityWorkspace,
 } from "../../template-sources/base/scripts/validation/shared/quality-scope-policy.ts";
-import { classifyRoutingPath, resolveQualityWorkspace } from "./routing-policy.ts";
+import {
+  classifyRoutingPath,
+  requiresGeneratedDependencyCheck,
+  resolveQualityWorkspace,
+} from "./routing-policy.ts";
 
 const liveContext = {
   kind: "live-repo",
@@ -137,5 +141,20 @@ describe("routing policy", () => {
         generatedExpectedWorkspace(resolveQualityWorkspace(path, generatedContext)),
       );
     }
+  });
+
+  test("detects generated dependency invariant surfaces", () => {
+    for (const path of [
+      "config/generated-dependencies/baseline.pkl",
+      "src/core/generated-dependencies.generated.ts",
+      "package.json",
+      "bun.lock",
+      "templates/package.json.tpl",
+      "template-sources/base/mise.toml",
+    ]) {
+      expect(requiresGeneratedDependencyCheck(path), path).toBe(true);
+    }
+
+    expect(requiresGeneratedDependencyCheck("src/index.ts")).toBe(false);
   });
 });

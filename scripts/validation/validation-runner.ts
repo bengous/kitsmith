@@ -31,8 +31,8 @@ function formatMs(ms: number): string {
   return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`;
 }
 
-async function packageScripts(): Promise<string[]> {
-  const packageJson = (await Bun.file(`${process.cwd()}/package.json`).json()) as unknown;
+async function packageScripts(cwd = process.cwd()): Promise<string[]> {
+  const packageJson = (await Bun.file(`${cwd}/package.json`).json()) as unknown;
   if (
     typeof packageJson === "object" &&
     packageJson !== null &&
@@ -68,10 +68,11 @@ export function summarizeValidationResults(
   };
 }
 
-async function run(step: string): Promise<ValidationResult> {
+async function run(step: string, cwd = process.cwd()): Promise<ValidationResult> {
   const startedAt = performance.now();
   const proc = Bun.spawn([process.execPath, "run", "--silent", step], {
     ...SPAWN_OPTS,
+    cwd,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -85,12 +86,16 @@ async function run(step: string): Promise<ValidationResult> {
   return { step, exit, output: (stdout + stderr).trimEnd(), ms: performance.now() - startedAt };
 }
 
-async function runVerboseSequential(steps: readonly string[]): Promise<ValidationResult[]> {
+async function runVerboseSequential(
+  steps: readonly string[],
+  cwd = process.cwd(),
+): Promise<ValidationResult[]> {
   return steps.reduce<Promise<ValidationResult[]>>(async (pendingResults, step) => {
     const results = await pendingResults;
     const startedAt = performance.now();
     const proc = Bun.spawn([process.execPath, "run", "--silent", step], {
       ...SPAWN_OPTS,
+      cwd,
       stdout: "inherit",
       stderr: "inherit",
     });
@@ -99,9 +104,25 @@ async function runVerboseSequential(steps: readonly string[]): Promise<Validatio
   }, Promise.resolve([]));
 }
 
+async function runSequential(
+  steps: readonly string[],
+  cwd: string,
+  verbose: boolean,
+): Promise<ValidationResult[]> {
+  if (verbose) {
+    return runVerboseSequential(steps, cwd);
+  }
+
+  return steps.reduce<Promise<ValidationResult[]>>(async (pendingResults, step) => {
+    const results = await pendingResults;
+    return [...results, await run(step, cwd)];
+  }, Promise.resolve([]));
+}
+
 async function pool(
   steps: readonly string[],
   concurrency: number,
+  cwd: string,
   onResult: (result: ValidationResult) => void,
 ): Promise<void> {
   let cursor = 0;
@@ -113,38 +134,75 @@ async function pool(
     if (step === undefined) {
       return;
     }
-    onResult(await run(step));
+    onResult(await run(step, cwd));
     return worker();
   }
 
   await Promise.all(Array.from({ length: width }, worker));
 }
 
-export async function executeValidationPlan(
+export function validationExecutionGroups(
+  plan: ValidationPlan,
+  availableScripts: ReadonlySet<string>,
+): {
+  readonly orderedPrerequisites: readonly string[];
+  readonly concurrentSteps: readonly string[];
+} {
+  const requestedSteps = resolveSteps(plan).filter((step) => availableScripts.has(step));
+  const orderedPrerequisites =
+    process.env["VALIDATE_STEPS"] === undefined
+      ? (plan.orderedPrerequisites ?? []).filter((step) => availableScripts.has(step))
+      : [];
+  const orderedSet = new Set(orderedPrerequisites);
+  return {
+    orderedPrerequisites,
+    concurrentSteps: requestedSteps.filter((step) => !orderedSet.has(step)),
+  };
+}
+
+export async function collectValidationResults(
   plan: ValidationPlan,
   args = process.argv,
-): Promise<void> {
+  cwd = process.cwd(),
+  printFailures = true,
+): Promise<ValidationResult[]> {
   const verbose = args.includes("--verbose");
   const jobs = parseFlag(args, "--jobs", 3);
-  const availableScripts = new Set(await packageScripts());
-  const steps = resolveSteps(plan).filter((step) => availableScripts.has(step));
+  const availableScripts = new Set(await packageScripts(cwd));
+  const steps = validationExecutionGroups(plan, availableScripts);
 
   const results: ValidationResult[] = [];
 
   function record(result: ValidationResult): void {
-    if (result.exit !== 0) {
+    if (printFailures && result.exit !== 0) {
       printFail(result);
     }
     results.push(result);
   }
 
+  for (const result of await runSequential(steps.orderedPrerequisites, cwd, verbose)) {
+    record(result);
+  }
+  if (results.some((result) => result.exit !== 0)) {
+    return results;
+  }
+
   if (verbose) {
-    for (const result of await runVerboseSequential(steps)) {
+    for (const result of await runVerboseSequential(steps.concurrentSteps, cwd)) {
       record(result);
     }
   } else {
-    await pool(steps, jobs, record);
+    await pool(steps.concurrentSteps, jobs, cwd, record);
   }
+
+  return results;
+}
+
+export async function executeValidationPlan(
+  plan: ValidationPlan,
+  args = process.argv,
+): Promise<void> {
+  const results = await collectValidationResults(plan, args);
 
   const summary = summarizeValidationResults(results);
 

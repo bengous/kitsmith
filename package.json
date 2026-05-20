@@ -62,6 +62,8 @@
     "test:safe-install": "bun scripts/testing/safe-install-smoke.ts",
     "test:e2e-contract": "bun scripts/testing/e2e-contract.ts",
     "test:adopt-vex": "bun scripts/testing/adopt-vex.ts",
+    "generated-dependencies:sync": "bun scripts/sync/generated-dependencies.ts --write",
+    "generated-dependencies:check": "bun scripts/sync/generated-dependencies.ts --check",
     "parent-tooling:sync": "bun scripts/sync/parent-tooling.ts --write",
     "parent-tooling:check": "bun scripts/sync/parent-tooling.ts --check",
     "agents:sync": "bun scripts/agents/sync-agents-md.ts --write",

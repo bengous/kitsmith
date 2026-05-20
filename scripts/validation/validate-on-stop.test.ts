@@ -10,13 +10,14 @@ test("stop validation targets code changes with check-level steps", () => {
   ).toEqual(["format:check", "lint:errors", "typecheck", "test"]);
 });
 
-test("stop validation keeps product contract checks out of PostToolUse", () => {
+test("stop validation runs generated dependency checks before product contract checks", () => {
   expect(
     stopValidationSteps(new Set(["product"]), {
       hasParentToolingCheck: true,
       hasAgentsCheck: true,
+      includeGeneratedDependenciesCheck: true,
     }),
-  ).toEqual(["format:check", "test:project-contract"]);
+  ).toEqual(["format:check", "test:project-contract", "generated-dependencies:check"]);
 });
 
 test("stop validation includes config sync checks without deep or sandbox lanes", () => {
@@ -24,6 +25,7 @@ test("stop validation includes config sync checks without deep or sandbox lanes"
     stopValidationSteps(new Set(["config", "backend", "scripts", "product"]), {
       hasParentToolingCheck: true,
       hasAgentsCheck: true,
+      includeGeneratedDependenciesCheck: true,
     }),
   ).toEqual([
     "format:check",
@@ -31,6 +33,7 @@ test("stop validation includes config sync checks without deep or sandbox lanes"
     "typecheck",
     "test",
     "test:project-contract",
+    "generated-dependencies:check",
     "parent-tooling:check",
     "agents:check",
   ]);

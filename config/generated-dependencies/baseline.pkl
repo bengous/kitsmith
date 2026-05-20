@@ -1,0 +1,403 @@
+import "GeneratedDependencies.pkl"
+
+baseline: GeneratedDependencies.Baseline = new {
+  packages {
+    ["@commitlint/cli"] = new GeneratedDependencies.GeneratedDependency {
+      version = "21.0.1"
+      sharedWithParent = true
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.devDependencies"
+        }
+      }
+    }
+    ["@commitlint/config-conventional"] = new GeneratedDependencies.GeneratedDependency {
+      version = "21.0.1"
+      sharedWithParent = true
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.devDependencies"
+        }
+      }
+    }
+    ["@effect/language-service"] = new GeneratedDependencies.GeneratedDependency {
+      version = "0.85.1"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            effect = true
+          }
+        }
+      }
+    }
+    ["@effect/platform"] = new GeneratedDependencies.GeneratedDependency {
+      version = "0.96.1"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.dependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            effect = true
+          }
+        }
+      }
+    }
+    ["@effect/platform-bun"] = new GeneratedDependencies.GeneratedDependency {
+      version = "0.89.0"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.dependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            effect = true
+          }
+        }
+      }
+    }
+    ["@playwright/test"] = new GeneratedDependencies.GeneratedDependency {
+      version = "1.59.1"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["@tanstack/react-router"] = new GeneratedDependencies.GeneratedDependency {
+      version = "1.169.2"
+      sharedWithParent = false
+      compatibilityGroup = "tanstack-router"
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.dependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["@tanstack/router-plugin"] = new GeneratedDependencies.GeneratedDependency {
+      version = "1.167.35"
+      sharedWithParent = false
+      compatibilityGroup = "tanstack-router"
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["@testing-library/dom"] = new GeneratedDependencies.GeneratedDependency {
+      version = "10.4.1"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["@testing-library/jest-dom"] = new GeneratedDependencies.GeneratedDependency {
+      version = "6.9.1"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["@testing-library/react"] = new GeneratedDependencies.GeneratedDependency {
+      version = "16.3.2"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["@types/bun"] = new GeneratedDependencies.GeneratedDependency {
+      version = "1.3.14"
+      sharedWithParent = true
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.devDependencies"
+        }
+      }
+    }
+    ["@types/node"] = new GeneratedDependencies.GeneratedDependency {
+      version = "25.6.0"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["@types/react"] = new GeneratedDependencies.GeneratedDependency {
+      version = "19.2.14"
+      sharedWithParent = false
+      compatibilityGroup = "react-types"
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["@types/react-dom"] = new GeneratedDependencies.GeneratedDependency {
+      version = "19.2.3"
+      sharedWithParent = false
+      compatibilityGroup = "react-types"
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["@vitejs/plugin-react"] = new GeneratedDependencies.GeneratedDependency {
+      version = "6.0.1"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["dependency-cruiser"] = new GeneratedDependencies.GeneratedDependency {
+      version = "17.4.0"
+      sharedWithParent = true
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.devDependencies"
+        }
+      }
+    }
+    ["effect"] = new GeneratedDependencies.GeneratedDependency {
+      version = "3.21.2"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.dependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            effect = true
+          }
+        }
+      }
+    }
+    ["jscpd"] = new GeneratedDependencies.GeneratedDependency {
+      version = "4.2.2"
+      sharedWithParent = true
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.devDependencies"
+        }
+      }
+    }
+    ["jsdom"] = new GeneratedDependencies.GeneratedDependency {
+      version = "29.1.1"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["knip"] = new GeneratedDependencies.GeneratedDependency {
+      version = "6.14.1"
+      sharedWithParent = true
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.devDependencies"
+        }
+      }
+    }
+    ["lefthook"] = new GeneratedDependencies.GeneratedDependency {
+      version = "2.1.6"
+      sharedWithParent = true
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.devDependencies"
+        }
+      }
+    }
+    ["oxfmt"] = new GeneratedDependencies.GeneratedDependency {
+      version = "0.50.0"
+      sharedWithParent = true
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.devDependencies"
+        }
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["oxlint"] = new GeneratedDependencies.GeneratedDependency {
+      version = "1.65.0"
+      sharedWithParent = true
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.devDependencies"
+        }
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["oxlint-plugin-complexity"] = new GeneratedDependencies.GeneratedDependency {
+      version = "2.1.2"
+      sharedWithParent = true
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.devDependencies"
+        }
+      }
+    }
+    ["oxlint-tsgolint"] = new GeneratedDependencies.GeneratedDependency {
+      version = "0.22.1"
+      sharedWithParent = true
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.devDependencies"
+        }
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["react"] = new GeneratedDependencies.GeneratedDependency {
+      version = "19.2.6"
+      sharedWithParent = false
+      compatibilityGroup = "react-types"
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.dependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["react-dom"] = new GeneratedDependencies.GeneratedDependency {
+      version = "19.2.6"
+      sharedWithParent = false
+      compatibilityGroup = "react-types"
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.dependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["stylelint"] = new GeneratedDependencies.GeneratedDependency {
+      version = "17.11.0"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["typescript"] = new GeneratedDependencies.GeneratedDependency {
+      version = "6.0.3"
+      sharedWithParent = true
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "root.devDependencies"
+        }
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["vite"] = new GeneratedDependencies.GeneratedDependency {
+      version = "8.0.11"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+    ["vitest"] = new GeneratedDependencies.GeneratedDependency {
+      version = "4.1.5"
+      sharedWithParent = false
+      emissions {
+        new GeneratedDependencies.DependencyEmission {
+          target = "frontend.devDependencies"
+          conditions = new GeneratedDependencies.Conditions {
+            frontend = "tanstack"
+          }
+        }
+      }
+    }
+  }
+
+  compatibilityGroups {
+    ["react-types"] = new GeneratedDependencies.CompatibilityGroup {
+      policy = "same-major"
+      packages {
+        "react"
+        "react-dom"
+        "@types/react"
+        "@types/react-dom"
+      }
+    }
+    ["tanstack-router"] = new GeneratedDependencies.CompatibilityGroup {
+      policy = "review-together"
+      packages {
+        "@tanstack/react-router"
+        "@tanstack/router-plugin"
+      }
+    }
+  }
+}

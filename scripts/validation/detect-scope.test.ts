@@ -27,6 +27,9 @@ describe("classifyFileWithWorkspace", () => {
     );
     expect(classifyFileWithWorkspace(".codex/config.toml", presence)).toBe("config");
     expect(classifyFileWithWorkspace(".claude/settings.json", presence)).toBe("config");
+    expect(classifyFileWithWorkspace("config/generated-dependencies/baseline.pkl", presence)).toBe(
+      "config",
+    );
     expect(classifyFileWithWorkspace("package.json", presence)).toBe("config");
     expect(classifyFileWithWorkspace("apps/frontend/src/main.tsx", presence)).toBe("frontend");
   });

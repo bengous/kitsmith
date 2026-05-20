@@ -112,6 +112,17 @@ export function isProductSurface(filePath: string): boolean {
   return normalized.startsWith("templates/") || normalized.startsWith("template-sources/");
 }
 
+export function requiresGeneratedDependencyCheck(filePath: string): boolean {
+  const normalized = normalizeRoutingPath(filePath);
+  return (
+    normalized === "package.json" ||
+    normalized === "bun.lock" ||
+    normalized === "src/core/generated-dependencies.generated.ts" ||
+    normalized.startsWith("config/generated-dependencies/") ||
+    isProductSurface(normalized)
+  );
+}
+
 export function classifyRoutingPath(
   filePath: string,
   context: RoutingContext,
@@ -136,6 +147,7 @@ export function classifyRoutingPath(
     return "product";
   }
   if (
+    normalized.startsWith("config/generated-dependencies/") ||
     normalized === ".codex/config.toml" ||
     normalized === ".claude/settings.json" ||
     normalized === ".agents/agents-md-manifest.json" ||

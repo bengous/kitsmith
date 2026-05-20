@@ -4,10 +4,12 @@ import type { Scope } from "./detect-scope";
 import { isParentToolingSyncPath, isParentToolingSyncTargetPath } from "../sync/parent-tooling.ts";
 import { classifyScopes, expandConfigScope, getChangedFiles } from "./detect-scope";
 import { resolveProjectRoot } from "./resolve-bin";
+import { requiresGeneratedDependencyCheck } from "./routing-policy.ts";
 import { LIVE_PUSH_VALIDATION_POLICY } from "./validation-plan.ts";
 
 type PushValidationOptions = {
   readonly includeParentToolingCheck?: boolean;
+  readonly includeGeneratedDependenciesCheck?: boolean;
 };
 
 function addUnique(target: string[], steps: readonly string[]): void {
@@ -24,6 +26,10 @@ export function pushValidationSteps(
 ): string[] {
   const steps: string[] = [];
   const validatesCode = scopes.has("backend") || scopes.has("scripts");
+
+  if (options.includeGeneratedDependenciesCheck) {
+    addUnique(steps, ["generated-dependencies:check"]);
+  }
 
   if (validatesCode) {
     addUnique(steps, LIVE_PUSH_VALIDATION_POLICY.codeSteps);
@@ -49,6 +55,10 @@ export function changedFilesRequireParentToolingCheck(files: readonly string[]):
   return files.some((file) => isParentToolingSyncPath(file));
 }
 
+export function changedFilesRequireGeneratedDependenciesCheck(files: readonly string[]): boolean {
+  return files.some((file) => requiresGeneratedDependencyCheck(file));
+}
+
 export function dirtyParentToolingTargetPaths(files: readonly string[]): string[] {
   return files.filter((file) => isParentToolingSyncTargetPath(file)).toSorted();
 }
@@ -58,6 +68,8 @@ async function main(): Promise<void> {
   const pushFiles = await getChangedFiles("push");
   const scopes = expandConfigScope(classifyScopes(pushFiles));
   const requiresParentToolingCheck = changedFilesRequireParentToolingCheck(pushFiles);
+  const requiresGeneratedDependenciesCheck =
+    changedFilesRequireGeneratedDependenciesCheck(pushFiles);
 
   if (scopes.size === 0) {
     console.log("No scoped changes detected, skipping validation.");
@@ -79,6 +91,7 @@ async function main(): Promise<void> {
 
   for (const step of pushValidationSteps(scopes, {
     includeParentToolingCheck: requiresParentToolingCheck,
+    includeGeneratedDependenciesCheck: requiresGeneratedDependenciesCheck,
   })) {
     await runScript(step);
   }

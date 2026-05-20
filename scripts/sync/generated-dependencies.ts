@@ -7,7 +7,7 @@ export const GENERATED_DEPENDENCIES_SCHEMA_PATH =
   "config/generated-dependencies/GeneratedDependencies.pkl";
 export const GENERATED_DEPENDENCIES_BASELINE_PATH = "config/generated-dependencies/baseline.pkl";
 export const GENERATED_DEPENDENCIES_ARTIFACT_PATH = "src/core/generated-dependencies.generated.ts";
-export const DEFAULT_PKL_COMMAND = ["mise", "exec", "--quiet", "--no-prepare", "--", "pkl"];
+export const DEFAULT_PKL_COMMAND = ["pkl"];
 
 export const DEPENDENCY_TARGETS = [
   "root.dependencies",

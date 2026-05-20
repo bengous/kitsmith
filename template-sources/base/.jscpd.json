@@ -6,6 +6,8 @@
     "**/*.e2e.test.ts",
     "**/AGENTS.md",
     "**/skills/**",
+    "**/.git/**",
+    "**/.itw/**",
     "**/.agents/agents-md-manifest.json",
     "**/.claude/rules/**",
     "**/.claude/settings.json"

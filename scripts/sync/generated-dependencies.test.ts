@@ -327,7 +327,7 @@ describe("generated dependency baseline validation", () => {
 
 describe("generated dependency drift checks", () => {
   test("default Pkl command suppresses mise prepare output", () => {
-    expect(DEFAULT_PKL_COMMAND).toEqual(["mise", "exec", "--quiet", "--no-prepare", "--", "pkl"]);
+    expect(DEFAULT_PKL_COMMAND).toEqual(["pkl"]);
   });
 
   test("mode parsing rejects ambiguous or unknown CLI flags", () => {

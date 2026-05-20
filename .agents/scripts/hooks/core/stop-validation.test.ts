@@ -10,6 +10,7 @@ import { readTouchedPaths, recordTouchedPaths } from "./touched-paths.ts";
 async function makeTestRoot(): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), "kitsmith-stop-"));
   await seedFile(root, ".agents/agents-md-manifest.json", "{}\n");
+  await seedFile(root, ".gitignore", ".agents/tmp/\n");
   await seedFile(root, "package.json", '{ "name": "generated app" }\n');
   await seedFile(root, "bunfig.toml", "\n");
   await seedFile(root, "src/index.ts", "export const main = true;\n");
@@ -245,14 +246,36 @@ describe("stop validation", () => {
     }
   });
 
-  test("blocks validation that changes a tracked file mode", async () => {
-    const root = await makeGitRoot();
+  test("blocks validation when Git reports a tracked file mode change", async () => {
+    const root = await makeTestRoot();
+    let validationRan = false;
     try {
       const result = await runStopValidation(
         eventFor(root),
-        mutatingRunner(async () => {
-          await chmod(path.join(root, "src/index.ts"), 0o755);
-        }),
+        async (command): Promise<CommandResult> => {
+          if (command[0] !== "git") {
+            validationRan = true;
+            return { code: 0, stdout: "", stderr: "" };
+          }
+
+          if (command.includes("rev-parse")) {
+            return { code: 0, stdout: "true\n", stderr: "" };
+          }
+          if (command.includes("status")) {
+            return { code: 0, stdout: validationRan ? " M src/index.ts\0" : "", stderr: "" };
+          }
+          if (command.includes("diff") && !command.includes("--cached")) {
+            return {
+              code: 0,
+              stdout: validationRan
+                ? "diff --git a/src/index.ts b/src/index.ts\nold mode 100644\nnew mode 100755\n"
+                : "",
+              stderr: "",
+            };
+          }
+
+          return { code: 0, stdout: "", stderr: "" };
+        },
       );
 
       expect(result.blockReason).toContain("Stop validation read-only violation");
@@ -261,6 +284,26 @@ describe("stop validation", () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+
+  test.skipIf(process.platform === "win32")(
+    "blocks validation that changes a tracked POSIX file mode",
+    async () => {
+      const root = await makeGitRoot();
+      try {
+        const result = await runStopValidation(
+          eventFor(root),
+          mutatingRunner(async () => {
+            await chmod(path.join(root, "src/index.ts"), 0o755);
+          }),
+        );
+
+        expect(result.blockReason).toContain("Stop validation read-only violation");
+        expect(result.blockReason).toContain("src/index.ts");
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
 
   test("passes a generated run id to validation without replacing it with session id", async () => {
     const root = await makeGitRoot();
@@ -370,6 +413,51 @@ describe("stop validation", () => {
       expect(result.blockReason).toContain(`stdout: ${stdoutRef}`);
       expect(result.blockReason).toContain("Run `bun run typecheck`");
       expect(result.blockReason).not.toContain("wrote file-199");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("keeps ignored protocol artifacts from masking validation failures", async () => {
+    const root = await makeGitRoot();
+    let stdoutRef = "";
+    try {
+      const result = await runStopValidation(eventFor(root), async (command, options) => {
+        if (command[0] === "git") {
+          return defaultRunCommand(command, options);
+        }
+
+        const runId = options.env?.["KITSMITH_STOP_RUN_ID"] ?? "missing-run-id";
+        stdoutRef = path.join(
+          ".agents",
+          "tmp",
+          "hooks",
+          "stop",
+          "session",
+          runId,
+          "typecheck-stdout.txt",
+        );
+        await seedFile(root, stdoutRef, "full validation output\n");
+        return {
+          code: 2,
+          stdout: `${JSON.stringify({
+            protocol: "kitsmith.stop-validation",
+            version: 1,
+            type: "failure",
+            runId,
+            failureKind: "validation_failed",
+            step: "typecheck",
+            exitCode: 2,
+            stdoutRef,
+            actionHint: "Run `bun run typecheck` outside the Stop hook and fix the failure.",
+          })}\n`,
+          stderr: "",
+        };
+      });
+
+      expect(result.blockReason).toContain("Stop validation failed in typecheck");
+      expect(result.blockReason).toContain(`stdout: ${stdoutRef}`);
+      expect(result.blockReason).not.toContain("read-only violation");
     } finally {
       await rm(root, { recursive: true, force: true });
     }

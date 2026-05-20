@@ -1,8 +1,9 @@
 import { expect, test } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
+  protocolContext,
   runStep,
   runReadOnlyStopSteps,
   stopValidationFiles,
@@ -108,6 +109,23 @@ test("stop validation executes allowed read-only steps", () => {
   expect(executed).toEqual(["/tmp/project:format:check", "/tmp/project:typecheck"]);
 });
 
+test("stop validation protocol context does not create output directories", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "kitsmith-stop-protocol-context-"));
+  try {
+    const protocol = protocolContext(root, {
+      KITSMITH_STOP_RUN_ID: "run",
+      KITSMITH_STOP_SESSION_ID: "session",
+    });
+
+    expect(protocol?.relativeOutputDir).toBe(
+      path.join(".agents", "tmp", "hooks", "stop", "session", "run"),
+    );
+    expect(await pathExists(path.join(root, ".agents/tmp/hooks/stop/session/run"))).toBe(false);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("stop validation emits JSONL records and captures raw step output in protocol mode", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "kitsmith-stop-protocol-"));
   const outputDir = path.join(root, ".agents/tmp/hooks/stop/session/run");
@@ -129,7 +147,7 @@ test("stop validation emits JSONL records and captures raw step output in protoc
         },
       }),
     );
-    await mkdir(outputDir, { recursive: true });
+    expect(await pathExists(outputDir)).toBe(false);
 
     const errors: string[] = [];
     runStep("noisy", root, errors, { runId: "run", outputDir, relativeOutputDir });
@@ -151,10 +169,13 @@ test("stop validation emits JSONL records and captures raw step output in protoc
     expect(
       await readFile(path.join(root, String(recordProperty(record, "stderrRef"))), "utf8"),
     ).toContain("failed reason");
-    expect((await stat(outputDir)).mode & 0o777).toBe(0o700);
-    expect(
-      (await stat(path.join(root, String(recordProperty(record, "stdoutRef"))))).mode & 0o777,
-    ).toBe(0o600);
+    expect(await pathExists(outputDir)).toBe(true);
+    if (usesPosixFileModeBits()) {
+      expect((await stat(outputDir)).mode & 0o777).toBe(0o700);
+      expect(
+        (await stat(path.join(root, String(recordProperty(record, "stdoutRef"))))).mode & 0o777,
+      ).toBe(0o600);
+    }
   } finally {
     process.stdout.write = originalWrite;
     await rm(root, { recursive: true, force: true });
@@ -165,4 +186,29 @@ function recordProperty(value: unknown, key: string): unknown {
   return typeof value === "object" && value !== null
     ? Object.getOwnPropertyDescriptor(value, key)?.value
     : undefined;
+}
+
+async function pathExists(targetPath: string): Promise<boolean> {
+  return stat(targetPath).then(
+    () => true,
+    (error: unknown) => {
+      if (errorCode(error) === "ENOENT") {
+        return false;
+      }
+      throw error;
+    },
+  );
+}
+
+function usesPosixFileModeBits(): boolean {
+  return process.platform !== "win32";
+}
+
+function errorCode(error: unknown): string | undefined {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return undefined;
+  }
+
+  const code = (error as { readonly code?: unknown }).code;
+  return typeof code === "string" ? code : undefined;
 }

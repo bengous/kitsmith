@@ -85,7 +85,7 @@ export function stopValidationSteps(
     addUnique(steps, LIVE_STOP_VALIDATION_POLICY.productSteps);
   }
 
-  if (options.includeGeneratedDependenciesCheck) {
+  if (options.includeGeneratedDependenciesCheck === true) {
     addUnique(steps, ["generated-dependencies:check"]);
   }
 
@@ -218,13 +218,16 @@ async function hasPackageScript(projectRoot: string, scriptName: string): Promis
   }
 }
 
-function protocolContext(projectRoot: string): StopValidationProtocolContext | undefined {
-  const runId = process.env["KITSMITH_STOP_RUN_ID"];
+export function protocolContext(
+  projectRoot: string,
+  env: Readonly<Record<string, string | undefined>> = process.env,
+): StopValidationProtocolContext | undefined {
+  const runId = env["KITSMITH_STOP_RUN_ID"];
   if (runId === undefined || runId.trim() === "") {
     return undefined;
   }
 
-  const sessionId = sanitizePathSegment(process.env["KITSMITH_STOP_SESSION_ID"] ?? "anonymous");
+  const sessionId = sanitizePathSegment(env["KITSMITH_STOP_SESSION_ID"] ?? "anonymous");
   const relativeOutputDir = path.join(
     ".agents",
     "tmp",
@@ -234,8 +237,6 @@ function protocolContext(projectRoot: string): StopValidationProtocolContext | u
     sanitizePathSegment(runId),
   );
   const outputDir = path.join(projectRoot, relativeOutputDir);
-  mkdirSync(outputDir, { recursive: true, mode: 0o700 });
-  chmodSync(outputDir, 0o700);
   return { runId, outputDir, relativeOutputDir };
 }
 
@@ -255,8 +256,10 @@ function writeStepOutput(
 
   const fileName = `${sanitizePathSegment(step)}-${stream}.txt`;
   const filePath = path.join(protocol.outputDir, fileName);
+  mkdirSync(protocol.outputDir, { recursive: true, mode: 0o700 });
   chmodSync(protocol.outputDir, 0o700);
   writeFileSync(filePath, output, { mode: 0o600 });
+  chmodSync(filePath, 0o600);
   return path.join(protocol.relativeOutputDir, fileName);
 }
 

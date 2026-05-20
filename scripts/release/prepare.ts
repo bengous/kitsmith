@@ -4,7 +4,7 @@ import type { SandboxPaths } from "../testing/sandbox-runner.ts";
 import { readFileSync } from "node:fs";
 import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { basename, join } from "node:path";
+import { basename, join, posix } from "node:path";
 import { parseJsonObject } from "../../src/core/json.ts";
 import {
   buildSandboxCommand,
@@ -220,7 +220,7 @@ export function buildReleaseInspectSandboxCommand(
   outDir: string,
   packedFilename: string,
 ): string[] {
-  const sandboxTarballPath = join(SANDBOX_OUT, packedFilename);
+  const sandboxTarballPath = posix.join(SANDBOX_OUT, packedFilename);
 
   return buildSandboxCommand({
     paths,
@@ -231,7 +231,7 @@ export function buildReleaseInspectSandboxCommand(
       `tarball=${shellQuote(sandboxTarballPath)}`,
       `test -f "$tarball" || { echo "Expected npm pack tarball missing: $tarball" >&2; exit 1; }`,
       `bun run ${shellQuote(
-        join(SANDBOX_WORK, "scripts/release/inspect-tarball.ts"),
+        posix.join(SANDBOX_WORK, "scripts/release/inspect-tarball.ts"),
       )} "$tarball" --no-network > /sandbox/out/tarball-inspection.json`,
     ].join("\n"),
     mounts: [

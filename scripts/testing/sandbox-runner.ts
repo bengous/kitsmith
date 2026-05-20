@@ -1,6 +1,6 @@
-import { existsSync } from "node:fs";
+import { existsSync, lstatSync, readlinkSync } from "node:fs";
 import { mkdir, realpath } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, posix } from "node:path";
 
 export const SANDBOX_ROOT = "/sandbox";
 export const SANDBOX_HOME = `${SANDBOX_ROOT}/home`;
@@ -125,17 +125,17 @@ export function hostSecretAbsenceChecks(
 ): string[] {
   return relativePaths.map((relativePath) => {
     const operator = relativePath.includes(".") && !relativePath.endsWith("rc") ? "-d" : "-e";
-    return `test ! ${operator} ${shellQuote(join(hostHome, relativePath))}`;
+    return `test ! ${operator} ${shellQuote(posix.join(hostHome, relativePath))}`;
   });
 }
 
 function parentDirectories(path: string): string[] {
   const parents: string[] = [];
-  let current = dirname(path);
+  let current = posix.dirname(path);
 
   while (current !== "/" && !parents.includes(current)) {
     parents.unshift(current);
-    current = dirname(current);
+    current = posix.dirname(current);
   }
 
   return parents;
@@ -161,6 +161,19 @@ function mountParentDirs(options: BuildSandboxCommandOptions): string[] {
   ]).filter((path) => path !== SANDBOX_ROOT);
 }
 
+function pushHostRootPath(command: string[], path: string): void {
+  if (!existsSync(path)) {
+    return;
+  }
+
+  if (lstatSync(path).isSymbolicLink()) {
+    command.push("--symlink", readlinkSync(path), path);
+    return;
+  }
+
+  command.push("--ro-bind", path, path);
+}
+
 export function buildSandboxCommand(options: BuildSandboxCommandOptions): string[] {
   const command = [
     "bwrap",
@@ -177,22 +190,21 @@ export function buildSandboxCommand(options: BuildSandboxCommandOptions): string
     "--bind",
     options.paths.hostSandboxRoot,
     SANDBOX_ROOT,
+    "--dir",
+    "/usr",
     "--ro-bind",
     "/usr",
     "/usr",
-    "--symlink",
-    "usr/bin",
-    "/bin",
-    "--symlink",
-    "usr/lib",
-    "/lib",
-    "--symlink",
-    "usr/lib",
-    "/lib64",
+    "--dir",
+    "/etc",
     "--ro-bind",
     "/etc",
     "/etc",
   ];
+
+  pushHostRootPath(command, "/bin");
+  pushHostRootPath(command, "/lib");
+  pushHostRootPath(command, "/lib64");
 
   if (existsSync("/run/systemd/resolve")) {
     command.push("--dir", "/run", "--dir", "/run/systemd", "--ro-bind", "/run/systemd/resolve");
@@ -212,7 +224,7 @@ export function buildSandboxCommand(options: BuildSandboxCommandOptions): string
   command.push(
     "--chdir",
     options.chdir,
-    "env",
+    "/usr/bin/env",
     "-i",
     ...envAssignments(buildSandboxEnv(options.paths.bunBinary, options.env)),
     "bash",

@@ -20,7 +20,7 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: `bun run dev -- --host 127.0.0.1 --port ${port} --strictPort`,
+    command: `bun run --no-install vite dev --host 127.0.0.1 --port ${port} --strictPort`,
     url: baseURL,
     reuseExistingServer: process.env["PLAYWRIGHT_REUSE_SERVER"] === "true",
     timeout: 120_000,

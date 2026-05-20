@@ -16,6 +16,7 @@ import {
   SANDBOX_ROOT,
   shellQuote,
 } from "./sandbox-runner.ts";
+import { runWithConcurrency, scenarioJobs } from "./scenario-concurrency.ts";
 import {
   ALL_SCAFFOLD_SCENARIOS,
   parseScenariosFromArgv,
@@ -30,6 +31,7 @@ const SANDBOX_PROJECT = `${SANDBOX_ROOT}/project`;
 export type SmokeOptions = {
   readonly scenarios: readonly SmokeScenario[];
   readonly keep: boolean;
+  readonly jobs: number;
 };
 
 function smokePortForScenario(scenario: SmokeScenario): string {
@@ -40,10 +42,19 @@ export function smokeScenariosFromArgv(argv: readonly string[]): SmokeScenario[]
   return parseScenariosFromArgv(argv, ALL_SCAFFOLD_SCENARIOS);
 }
 
-export function smokeOptionsFromArgv(argv: readonly string[]): SmokeOptions {
+export function smokeOptionsFromArgv(
+  argv: readonly string[],
+  env: NodeJS.ProcessEnv = process.env,
+): SmokeOptions {
   return {
     scenarios: smokeScenariosFromArgv(argv),
     keep: argv.includes("--keep"),
+    jobs: scenarioJobs({
+      argv,
+      env,
+      envName: "KITSMITH_SMOKE_JOBS",
+      localDefault: 3,
+    }),
   };
 }
 
@@ -134,10 +145,8 @@ export async function smoke(
 
 export async function runSmoke(options: SmokeOptions): Promise<void> {
   requireLinuxBubblewrap("smoke test");
-  await Promise.all(
-    options.scenarios.map(async (scenario) =>
-      smoke(scenario, SCAFFOLD_SCENARIO_CONFIG[scenario], { keep: options.keep }),
-    ),
+  await runWithConcurrency(options.scenarios, options.jobs, async (scenario) =>
+    smoke(scenario, SCAFFOLD_SCENARIO_CONFIG[scenario], { keep: options.keep }),
   );
 }
 

@@ -83,7 +83,7 @@ function commandOutput(command: readonly string[]): string {
   const result = Bun.spawnSync([...command], {
     stdout: "pipe",
     stderr: "pipe",
-    env: { PATH: "/usr/bin:/bin" },
+    env: { PATH: process.env["PATH"] ?? process.env["Path"] ?? "/usr/bin:/bin" },
   });
 
   if (result.exitCode !== 0) {

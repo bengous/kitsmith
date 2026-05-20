@@ -66,7 +66,7 @@ async function scanDirectory(
         return;
       }
 
-      const displayPath = relative(root, path);
+      const displayPath = relative(root, path).replaceAll("\\", "/");
       if (!isLegitimateTanStackPayloadPath(path)) {
         findings.push({ kind: "unexpected-payload-path", path: displayPath });
       }

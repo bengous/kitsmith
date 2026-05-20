@@ -2,7 +2,7 @@ import type { FrontendPreset, InitOptions } from "../types.ts";
 import type { PromptRuntime } from "./prompts.ts";
 import { describe, expect, test } from "bun:test";
 import { mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import {
   collectAdoptOptionsWithRuntime,
   collectOptionsWithRuntime,
@@ -93,7 +93,7 @@ describe("normalizeFlagOptions", () => {
     });
 
     expect(plainOptions(normalized)).toEqual({
-      destination: "/work/custom",
+      destination: resolve("/work/custom"),
       projectName: "chosen-name",
       packageName: "pkg-name",
       binName: "custom-bin",

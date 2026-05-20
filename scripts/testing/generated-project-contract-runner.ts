@@ -566,6 +566,8 @@ async function assertFrontendContract(
   assertPathExists(root, "apps/frontend/e2e/home.spec.ts");
   assertNoExternalPackageExecutorScripts(frontendScripts, "frontend package");
   await assertFileContains(root, "apps/frontend/playwright.config.ts", "--strictPort");
+  await assertFileContains(root, "apps/frontend/playwright.config.ts", "bun run --no-install vite");
+  await assertFileExcludes(root, "apps/frontend/playwright.config.ts", "bun run dev --");
   await assertFileContains(root, "apps/frontend/playwright.config.ts", "PLAYWRIGHT_PORT");
   await assertFileContains(root, "apps/frontend/playwright.config.ts", "PLAYWRIGHT_REUSE_SERVER");
   await assertFileContains(

@@ -16,6 +16,7 @@ import {
   SANDBOX_ROOT,
   shellQuote,
 } from "./sandbox-runner.ts";
+import { runWithConcurrency, scenarioJobs } from "./scenario-concurrency.ts";
 import { parseScenariosFromArgv } from "./scenarios.ts";
 
 export type E2eContractScenario = ScaffoldScenario;
@@ -34,16 +35,26 @@ const SANDBOX_PROJECT = `${SANDBOX_ROOT}/project`;
 export type E2eContractOptions = {
   readonly scenarios: readonly E2eContractScenario[];
   readonly keep: boolean;
+  readonly jobs: number;
 };
 
 export function e2eContractScenariosFromArgv(argv: readonly string[]): E2eContractScenario[] {
   return parseScenariosFromArgv(argv, DEFAULT_E2E_CONTRACT_SCENARIOS);
 }
 
-export function e2eContractOptionsFromArgv(argv: readonly string[]): E2eContractOptions {
+export function e2eContractOptionsFromArgv(
+  argv: readonly string[],
+  env: NodeJS.ProcessEnv = process.env,
+): E2eContractOptions {
   return {
     scenarios: e2eContractScenariosFromArgv(argv),
     keep: argv.includes("--keep"),
+    jobs: scenarioJobs({
+      argv,
+      env,
+      envName: "KITSMITH_E2E_CONTRACT_JOBS",
+      localDefault: 3,
+    }),
   };
 }
 
@@ -109,8 +120,8 @@ export async function e2eContract(
 
 export async function runE2eContract(options: E2eContractOptions): Promise<void> {
   requireLinuxBubblewrap("e2e contract");
-  await Promise.all(
-    options.scenarios.map(async (scenario) => e2eContract(scenario, { keep: options.keep })),
+  await runWithConcurrency(options.scenarios, options.jobs, async (scenario) =>
+    e2eContract(scenario, { keep: options.keep }),
   );
 }
 

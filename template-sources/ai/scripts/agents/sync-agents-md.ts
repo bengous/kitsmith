@@ -305,7 +305,10 @@ async function ensureManagedPathIsRegularFile(path: string): Promise<string | nu
 
 async function writeLfFile(path: string, content: string): Promise<void> {
   const normalized = normalizeNewlines(content);
-  await mkdir(dirname(path), { recursive: true });
+  const directory = dirname(path);
+  if (directory !== ".") {
+    await mkdir(directory, { recursive: true });
+  }
   await Bun.write(path, normalized);
 }
 

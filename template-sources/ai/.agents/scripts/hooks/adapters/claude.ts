@@ -213,7 +213,7 @@ function sameFile(value: unknown, updatedPath: string, cwd: string | undefined):
     return false;
   }
 
-  return normalizePath(responsePath) === normalizePath(path.resolve(cwd, updatedPath));
+  return normalizePath(responsePath) === normalizePath(`${cwd}/${updatedPath}`);
 }
 
 function normalizePath(filePath: string): string {

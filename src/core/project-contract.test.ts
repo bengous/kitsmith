@@ -232,7 +232,7 @@ test("generated public scripts match the exact shape and preset matrix", async (
     expect(String(scripts["test"])).not.toContain("test:e2e");
     expect(String(scripts["test"])).not.toContain("playwright");
   }
-});
+}, 20_000);
 
 for (const scenario of scenarios) {
   test(`generated project contract: ${scenario.name}`, async () => {

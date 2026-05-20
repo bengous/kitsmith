@@ -66,7 +66,7 @@ describe("buildSafeInstallSandboxCommand", () => {
   });
 
   test("runs the supply-chain probe inside the sandbox after installing", () => {
-    const commandText = tanStackAiSafeInstallCommandText();
+    const commandText = tanStackAiSafeInstallCommandText().replaceAll("\\", "/");
     const installIndex = commandText.indexOf("--install true");
     const probeIndex = commandText.indexOf("scripts/testing/supply-chain-probe.ts");
 

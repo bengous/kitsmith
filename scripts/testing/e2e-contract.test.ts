@@ -74,17 +74,27 @@ describe("e2eContractScenariosFromArgv", () => {
 describe("e2eContractOptionsFromArgv", () => {
   test("preserves requested scenario and keep mode", () => {
     expect(
-      e2eContractOptionsFromArgv([
-        "bun",
-        "scripts/testing/e2e-contract.ts",
-        "--scenario",
-        "none-ai",
-        "--keep",
-      ]),
+      e2eContractOptionsFromArgv(
+        ["bun", "scripts/testing/e2e-contract.ts", "--scenario", "none-ai", "--keep"],
+        {},
+      ),
     ).toEqual({
       scenarios: ["none-ai"],
       keep: true,
+      jobs: 3,
     });
+  });
+
+  test("accepts an explicit scenario concurrency limit", () => {
+    expect(
+      e2eContractOptionsFromArgv(["bun", "scripts/testing/e2e-contract.ts", "--jobs", "2"]),
+    ).toMatchObject({ jobs: 2 });
+  });
+
+  test("defaults to one scenario at a time in CI", () => {
+    expect(
+      e2eContractOptionsFromArgv(["bun", "scripts/testing/e2e-contract.ts"], { CI: "true" }),
+    ).toMatchObject({ jobs: 1 });
   });
 });
 

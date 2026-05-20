@@ -45,11 +45,23 @@ describe("smokeScenariosFromArgv", () => {
 describe("smokeOptionsFromArgv", () => {
   test("preserves requested scenario and keep mode", () => {
     expect(
-      smokeOptionsFromArgv(["bun", "scripts/testing/smoke.ts", "--scenario", "none-ai", "--keep"]),
+      smokeOptionsFromArgv(
+        ["bun", "scripts/testing/smoke.ts", "--scenario", "none-ai", "--keep"],
+        {},
+      ),
     ).toEqual({
       scenarios: ["none-ai"],
       keep: true,
+      jobs: 3,
     });
+  });
+
+  test("accepts an explicit scenario concurrency limit", () => {
+    expect(smokeOptionsFromArgv(["bun", "scripts/testing/smoke.ts", "--jobs", "2"]).jobs).toBe(2);
+  });
+
+  test("defaults to one scenario at a time in CI", () => {
+    expect(smokeOptionsFromArgv(["bun", "scripts/testing/smoke.ts"], { CI: "true" }).jobs).toBe(1);
   });
 });
 

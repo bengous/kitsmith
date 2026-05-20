@@ -37,4 +37,4 @@ terms live in each domain's own `UBIQUITOUS_LANGUAGE.md`.
 
 - "Baseline" is not global enough to use alone. Prefer the precise local term, such as **Generated Dependency Baseline**, or say **Product Contract** when describing the whole Kitsmith promise.
 - "Generated" can mean a generated project, generated artifact, or generated file. Use the full term when ambiguity matters.
-- "Validation" can mean a lane, a leaf command, a hook, or a sandbox scenario. Validation lane terms live in `docs/validation/UBIQUITOUS_LANGUAGE.md`.
+- "Validation" can mean a lane, a leaf command, a hook, or a sandbox scenario. Validation lane terms live in `docs/product/validation/UBIQUITOUS_LANGUAGE.md`.

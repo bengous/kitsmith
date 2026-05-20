@@ -52,7 +52,7 @@ actions with backups, and supports rollback for manifest-recorded file writes.
 
    Evidence: `adoptionTemplatePolicy` in `src/core/adoption-policy.ts`.
 
-8. Some guidance files are preserved if they already exist, including `CLAUDE.md` and the legacy
+8. Some guidance files are preserved if they already exist, including `CLAUDE.md` and the older
    Claude rule paths explicitly listed in the adoption policy. Current generated AI rule template
    paths are not part of that preserve list unless the policy is updated.
 

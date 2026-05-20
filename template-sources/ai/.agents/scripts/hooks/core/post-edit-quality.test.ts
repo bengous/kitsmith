@@ -208,7 +208,7 @@ describe("post-edit quality", () => {
     });
   });
 
-  test("Claude block payload can still include a shape-compatible updatedToolOutput", () => {
+  test("Claude block payload preserves native updatedToolOutput shape", () => {
     const payload = claudePostToolUsePayload(
       {
         blockReason: "Post-edit quality gate failed",

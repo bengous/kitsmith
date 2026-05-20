@@ -151,34 +151,26 @@ describe("manifest metadata", () => {
     expect(manifest.sources?.["CLAUDE.md"]?.checksum).toStartWith("sha256-");
   });
 
-  test("reads generated paths from legacy v1 and v2 outputs", () => {
+  test("reads generated paths from the v2 manifest generated list", () => {
     expect(
       generatedPathsFromManifest({
+        version: 2,
         generated: ["AGENTS.md", "scripts\\AGENTS.md"],
-        outputs: {
-          "src\\AGENTS.md": {
-            kind: "layer",
-            checksum: "sha256-test",
-            sourcePath: ".claude/rules/src.md",
-          },
-        },
+        outputs: {},
+        sources: {},
       }),
-    ).toEqual(["AGENTS.md", "scripts/AGENTS.md", "src/AGENTS.md"]);
+    ).toEqual(["AGENTS.md", "scripts/AGENTS.md"]);
   });
 
   test("generated preset normalizes manifest paths", () => {
     expect(
       generatedPresetPathsFromManifest({
+        version: 2,
         generated: ["AGENTS.md", "scripts\\AGENTS.md"],
-        outputs: {
-          "src\\AGENTS.md": {
-            kind: "layer",
-            checksum: "sha256-test",
-            sourcePath: ".claude/rules/src.md",
-          },
-        },
+        outputs: {},
+        sources: {},
       }),
-    ).toEqual(["AGENTS.md", "scripts/AGENTS.md", "src/AGENTS.md"]);
+    ).toEqual(["AGENTS.md", "scripts/AGENTS.md"]);
   });
 });
 
@@ -350,6 +342,19 @@ describe("integration: sandbox project", () => {
   test("--check exits 0 after --write", () => {
     const { exitCode } = runScript(dir, "--check");
     expect(exitCode).toBe(0);
+  });
+
+  test("--check rejects manifests without the v2 metadata contract", async () => {
+    await Bun.write(
+      `${dir}/.agents/agents-md-manifest.json`,
+      JSON.stringify({ generated: ["AGENTS.md"] }, null, "\t"),
+    );
+
+    const { exitCode, stderr } = runScript(dir, "--check");
+    expect(exitCode).toBe(1);
+    expect(stderr).toContain("invalid manifest shape");
+
+    runScript(dir, "--write");
   });
 
   test("root AGENTS.md mirrors CLAUDE.md", async () => {

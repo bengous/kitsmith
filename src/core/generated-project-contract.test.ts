@@ -57,7 +57,7 @@ test("buildGeneratedProjectContract models root and frontend package facts", () 
   );
 });
 
-test("describeGeneratedProject remains a compatibility projection", () => {
+test("describeGeneratedProject remains a contract projection", () => {
   const contract = buildGeneratedProjectContract(makeOptions());
   const description = describeGeneratedProject(makeOptions());
 

@@ -435,7 +435,7 @@ describe("buildAdoptionPlan", () => {
   test("reports parent path file conflicts before apply", async () => {
     const dir = makeTempProject();
     seedBunTsProject(dir);
-    writeProjectFile(dir, ".codex", "legacy codex marker\n");
+    writeProjectFile(dir, ".codex", "existing .codex file marker\n");
 
     const plan = await buildAdoptionPlan(makeOptions(dir, { ai: true }));
 
@@ -452,7 +452,7 @@ describe("buildAdoptionPlan", () => {
   test("keeps non-Codex parent path conflicts explicit before apply", async () => {
     const dir = makeTempProject();
     seedBunTsProject(dir);
-    writeProjectFile(dir, ".claude", "legacy claude marker\n");
+    writeProjectFile(dir, ".claude", "existing .claude file marker\n");
 
     const plan = await buildAdoptionPlan(makeOptions(dir, { ai: true }));
 
@@ -474,7 +474,7 @@ describe("buildAdoptionPlan", () => {
       writeProjectFile(dir, "AI.md", "Existing Vex guidance\n");
       symlinkSync("AI.md", join(dir, "CLAUDE.md"), "file");
       symlinkSync("AI.md", join(dir, "AGENTS.md"), "file");
-      writeProjectFile(dir, ".codex", "legacy codex marker\n");
+      writeProjectFile(dir, ".codex", "existing .codex file marker\n");
       mkdirSync(join(dir, ".claude/worktrees"), { recursive: true });
 
       const plan = await buildAdoptionPlan(makeOptions(dir, { ai: true }));

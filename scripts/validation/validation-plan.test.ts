@@ -43,7 +43,6 @@ test("live package scripts expose thin maintainer lane entrypoints", () => {
     "bun scripts/validation/validate.ts --plan sandbox",
   );
   expect(packageScripts["release:prepare"]).toBe("bun scripts/release/prepare.ts");
-  expect(packageScripts["validate:scale"]).toBeUndefined();
 });
 
 test("live check plan is fast read-only and excludes deep, sandbox, and release lanes", () => {
@@ -71,7 +70,6 @@ test("live validate plan keeps live-only rails out of generated validation", () 
   expect(LIVE_VALIDATE_PLAN.defaultSteps).toContain("parent-tooling:check");
   expect(LIVE_VALIDATE_PLAN.defaultSteps).toContain("lint:arch");
   expect(LIVE_VALIDATE_PLAN.defaultSteps).toContain("lint:audit");
-  expect(LIVE_VALIDATE_PLAN.defaultSteps).not.toContain("validate:frontend");
 });
 
 test("live deep, generated, sandbox, and release lanes stay separated", () => {
@@ -100,7 +98,6 @@ test("live sandbox lane owns e2e, disposable install, smoke, and supply-chain ch
   expect(packageScripts["validate:sandbox"]).toBe(
     "bun scripts/validation/validate.ts --plan sandbox",
   );
-  expect(packageScripts["validate:supply-chain"]).toBeUndefined();
   expect(LIVE_SANDBOX_PLAN.defaultSteps).toEqual(sandboxE2eInstallSmokeSteps);
 
   const commandText = LIVE_SANDBOX_PLAN.defaultSteps
@@ -151,7 +148,6 @@ test("live generated lane is host-safe product contract coverage", () => {
 test("live push policy keeps product contract validation explicit", () => {
   expect(LIVE_PUSH_VALIDATION_POLICY.productSteps[0]).toBe(generatedDependencyCheckStep);
   expect(LIVE_PUSH_VALIDATION_POLICY.productSteps).toContain("test:project-contract");
-  expect(LIVE_PUSH_VALIDATION_POLICY.productSteps).not.toContain("validate:frontend");
   expect(LIVE_PUSH_VALIDATION_POLICY.configSteps).toEqual([
     generatedDependencyCheckStep,
     "parent-tooling:check",
@@ -216,39 +212,6 @@ test("live stop policy stays targeted to check-level steps", () => {
   }
 });
 
-test("maintainer validation docs map old commands and delegate domain-specific contracts", () => {
-  const docs = readFileSync("docs/maintainer-validation.md", "utf8");
-  for (const expected of [
-    "| `validate` | `validate` |",
-    "| `validate:scale` | removed |",
-    "| `lint:dead` | `validate:deep` |",
-    "| `lint:dupes` | `validate:deep` |",
-    "| `check:github-actions` | `validate:deep` |",
-    "| `check:github-actions-security` | `validate:deep` |",
-    "| `check:links` | `validate:deep` |",
-    "| `test:e2e-contract` | `validate:sandbox` |",
-    "| `test:smoke` | `validate:sandbox` |",
-    "| `test:safe-install` | `validate:sandbox` |",
-    "| supply-chain probe | `validate:sandbox` |",
-    "| tarball smoke | `release:prepare` |",
-    "| `release:prepare` | `release:prepare` |",
-  ]) {
-    expect(docs).toContain(expected);
-  }
-
-  expect(docs).toContain("Linux/bubblewrap");
-  expect(docs).toContain("must not run bubblewrap sandboxes");
-  expect(docs).toContain("network-enabled generated-project");
-  expect(docs).toContain("temporary projects under the OS temp directory");
-  expect(docs).toContain("supply-chain probe runs inside `test:safe-install`");
-  expect(docs).toContain("publish, tag, push");
-  expect(docs).toContain("Internal leaves");
-  expect(docs).toContain("Generated Dependency Baseline");
-  expect(docs).toContain("docs/generated-dependencies/CONTRACT.md");
-  expect(docs).toContain("docs/generated-dependencies/UBIQUITOUS_LANGUAGE.md");
-  expect(docs).toContain("generated-dependencies:check");
-});
-
 test("every live validation plan package step has a package script", () => {
   const planSteps = new Set([
     ...LIVE_CHECK_PLAN.defaultSteps,
@@ -311,10 +274,8 @@ test("generated check plan is a fast read-only subset of generated validate", ()
 
   expect(GENERATED_PROJECT_CHECK_PLAN.defaultSteps).not.toContain("lint:dead");
   expect(GENERATED_PROJECT_CHECK_PLAN.defaultSteps).not.toContain("lint:dupes");
-  expect(GENERATED_PROJECT_CHECK_PLAN.defaultSteps).not.toContain("validate:frontend");
   expect(GENERATED_PROJECT_VALIDATE_PLAN.defaultSteps).toContain("build:frontend");
   expect(GENERATED_PROJECT_VALIDATE_PLAN.defaultSteps).toContain("test:e2e");
-  expect(GENERATED_PROJECT_VALIDATE_PLAN.defaultSteps).not.toContain("validate:frontend");
   expect(GENERATED_PROJECT_VALIDATE_PLAN.defaultSteps).not.toContain("release:prepare");
   expect(GENERATED_PROJECT_VALIDATE_PLAN.defaultSteps).not.toContain("validate:sandbox");
   expect([

@@ -18,16 +18,16 @@ lives in `scripts/validation/validation-plan.ts`.
 ## Related Release Gate
 
 `bun run release:prepare` is documented in
-[`docs/maintainer-release.md`](./maintainer-release.md). It runs release-only checks, scriptless
+[`docs/maintainer/release.md`](./release.md). It runs release-only checks, scriptless
 `npm pack`, no-network tarball inspection, manifest writing, and tarball smoke; it is not a
 validation lane.
 
 ## Generated Dependency Baseline
 
 The generated dependency contract lives in
-[`docs/generated-dependencies/CONTRACT.md`](./generated-dependencies/CONTRACT.md);
+[`docs/product/generated-dependencies/CONTRACT.md`](../product/generated-dependencies/CONTRACT.md);
 the domain terms live in
-[`docs/generated-dependencies/UBIQUITOUS_LANGUAGE.md`](./generated-dependencies/UBIQUITOUS_LANGUAGE.md).
+[`docs/product/generated-dependencies/UBIQUITOUS_LANGUAGE.md`](../product/generated-dependencies/UBIQUITOUS_LANGUAGE.md).
 
 `generated-dependencies:check` is part of `check`, `validate`, and
 `validate:deep`. `validate:generated` runs it as an ordered prerequisite before
@@ -72,24 +72,6 @@ scenario-level smoke/e2e concurrency through `KITSMITH_SMOKE_JOBS` and
 `release:prepare` depends on Cocogitto's `cog` binary for changelog and version
 checks. Keep Cocogitto pinned in `mise.toml` and installed in the manual
 release workflow before running the release preparation script.
-
-## Migration Map
-
-| Previous/current command | Target lane | Status |
-| --- | --- | --- |
-| `validate` | `validate` | Kept as the daily gate. |
-| `validate:scale` | removed | Replaced by explicit `validate:deep`, `validate:generated`, and `validate:sandbox` lanes; no legacy alias. |
-| `lint:dead` | `validate:deep` | Kept as an internal leaf. |
-| `lint:dupes` | `validate:deep` | Kept as an internal leaf. |
-| `check:github-actions` | `validate:deep` | Kept as an internal leaf. |
-| `check:github-actions-security` | `validate:deep` | Kept as an internal leaf. |
-| `check:links` | `validate:deep` | Kept as an internal leaf. |
-| `test:e2e-contract` | `validate:sandbox` | Kept as an internal leaf; requires Linux/bubblewrap and enables sandbox network. |
-| `test:smoke` | `validate:sandbox` | Kept as an internal leaf. |
-| `test:safe-install` | `validate:sandbox` | Kept as an internal leaf; requires Linux/bubblewrap. |
-| supply-chain probe | `validate:sandbox` | Runs inside `test:safe-install` after sandboxed install. |
-| tarball smoke | `release:prepare` | Kept release-only through `scripts/release/prepare.ts`. |
-| `release:prepare` | `release:prepare` | Kept maintainer-only and outside validation lanes. |
 
 ## Internal leaves
 

@@ -13,8 +13,8 @@ emissions, conditions, compatibility groups, sync behavior, and read-only drift 
 - Committed runtime artifact: `src/core/generated-dependencies.generated.ts`.
 - Runtime resolver: `src/core/generated-dependencies.ts`.
 - Sync/check command: `scripts/sync/generated-dependencies.ts`.
-- Maintainer docs: `docs/generated-dependencies/UBIQUITOUS_LANGUAGE.md` and
-  `docs/maintainer-validation.md`.
+- Maintainer docs: `docs/product/generated-dependencies/UBIQUITOUS_LANGUAGE.md` and
+  `docs/maintainer/validation.md`.
 
 ## Invariants
 

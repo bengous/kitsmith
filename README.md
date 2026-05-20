@@ -117,12 +117,12 @@ kitsmith adopt [destination]
 ## Maintainer workflow
 
 Product domains and source-of-truth boundaries start at
-[docs/DOMAIN_MAP.md](./docs/DOMAIN_MAP.md). Cross-domain invariants live in
-[docs/CORE_CONTRACT.md](./docs/CORE_CONTRACT.md).
+[docs/product/DOMAIN_MAP.md](./docs/product/DOMAIN_MAP.md). Cross-domain invariants live in
+[docs/product/CORE_CONTRACT.md](./docs/product/CORE_CONTRACT.md).
 
 Daily, deep, generated-project, sandbox, and release gates are documented in
-[docs/maintainer-validation.md](./docs/maintainer-validation.md). Kitsmith release
-maintenance is documented in [docs/maintainer-release.md](./docs/maintainer-release.md).
+[docs/maintainer/validation.md](./docs/maintainer/validation.md). Kitsmith release
+maintenance is documented in [docs/maintainer/release.md](./docs/maintainer/release.md).
 Cocogitto is used only as maintainer release tooling; generated projects do not
 receive Cocogitto.
 

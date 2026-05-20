@@ -1,5 +1,11 @@
 import { expect, test } from "bun:test";
-import { stopValidationFiles, stopValidationSteps } from "./validate-on-stop.ts";
+import {
+  runReadOnlyStopSteps,
+  stopValidationFiles,
+  stopValidationSteps,
+  UnclassifiedStopStepError,
+  unclassifiedStopSteps,
+} from "./validate-on-stop.ts";
 
 test("stop validation targets code changes with check-level steps", () => {
   expect(
@@ -50,4 +56,50 @@ test("stop validation includes generated dependency Pkl files", () => {
     "config/generated-dependencies/baseline.pkl",
     "src/core/generated-project-contract.ts",
   ]);
+});
+
+test("stop validation refuses steps not explicitly classified read-only", () => {
+  expect(unclassifiedStopSteps(["format:check", "agents:sync", "typecheck"])).toEqual([
+    "agents:sync",
+  ]);
+});
+
+test("stop validation allows explicitly classified read-only steps", () => {
+  expect(
+    unclassifiedStopSteps([
+      "format:check",
+      "lint:errors",
+      "typecheck",
+      "test",
+      "test:project-contract",
+      "generated-dependencies:check",
+      "parent-tooling:check",
+      "agents:check",
+    ]),
+  ).toEqual([]);
+});
+
+test("stop validation refuses unclassified steps before execution", () => {
+  const executed: string[] = [];
+  const errors: string[] = [];
+
+  expect(() =>
+    runReadOnlyStopSteps(["format:check", "agents:sync"], "/tmp", errors, (step) => {
+      executed.push(step);
+    }),
+  ).toThrow(UnclassifiedStopStepError);
+
+  expect(executed).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test("stop validation executes allowed read-only steps", () => {
+  const executed: string[] = [];
+  const errors: string[] = [];
+
+  runReadOnlyStopSteps(["format:check", "typecheck"], "/tmp/project", errors, (step, cwd) => {
+    executed.push(`${cwd}:${step}`);
+  });
+
+  expect(executed).toEqual(["/tmp/project:format:check", "/tmp/project:typecheck"]);
 });

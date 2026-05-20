@@ -6,9 +6,30 @@ import { resolveProjectRoot } from "./resolve-bin";
 import { requiresGeneratedDependencyCheck } from "./routing-policy.ts";
 import { LIVE_STOP_VALIDATION_POLICY } from "./validation-plan.ts";
 
+export const UNCLASSIFIED_STOP_STEP_PREFIX = "STOP_UNCLASSIFIED_STEP";
+
 type StopHookInput = {
   readonly stop_hook_active?: boolean;
 };
+
+// Keep this local until repeated Stop step sets justify a shared step model/type.
+const READ_ONLY_STOP_STEPS = new Set([
+  "format:check",
+  "lint:errors",
+  "typecheck",
+  "test",
+  "test:project-contract",
+  "generated-dependencies:check",
+  "parent-tooling:check",
+  "agents:check",
+]);
+
+export class UnclassifiedStopStepError extends Error {
+  constructor(readonly steps: readonly string[]) {
+    super(`Stop validation steps are not classified as read-only: ${steps.join(", ")}`);
+    this.name = "UnclassifiedStopStepError";
+  }
+}
 
 function addUnique(steps: string[], nextSteps: readonly string[]): void {
   for (const step of nextSteps) {
@@ -58,6 +79,17 @@ export function stopValidationSteps(
   return steps;
 }
 
+export function unclassifiedStopSteps(steps: readonly string[]): string[] {
+  return steps.filter((step) => !READ_ONLY_STOP_STEPS.has(step));
+}
+
+export function assertReadOnlyStopSteps(steps: readonly string[]): void {
+  const refusedSteps = unclassifiedStopSteps(steps);
+  if (refusedSteps.length > 0) {
+    throw new UnclassifiedStopStepError(refusedSteps);
+  }
+}
+
 export function stopValidationFiles(files: readonly string[]): string[] {
   return files.filter((file) => CODE_PATTERN.test(file) || requiresGeneratedDependencyCheck(file));
 }
@@ -75,6 +107,18 @@ function runStep(step: string, cwd: string, errors: string[]): void {
       .join("\n")
       .trim();
     errors.push(`[${step}] ${output || `exited with code ${result.exitCode}`}`);
+  }
+}
+
+export function runReadOnlyStopSteps(
+  steps: readonly string[],
+  cwd: string,
+  errors: string[],
+  stepRunner: (step: string, cwd: string, errors: string[]) => void = runStep,
+): void {
+  assertReadOnlyStopSteps(steps);
+  for (const step of steps) {
+    stepRunner(step, cwd, errors);
   }
 }
 
@@ -140,9 +184,14 @@ async function main(): Promise<void> {
       requiresGeneratedDependencyCheck(file),
     ),
   });
-
-  for (const step of steps) {
-    runStep(step, projectRoot, errors);
+  try {
+    runReadOnlyStopSteps(steps, projectRoot, errors);
+  } catch (error) {
+    if (error instanceof UnclassifiedStopStepError) {
+      process.stderr.write(`${UNCLASSIFIED_STOP_STEP_PREFIX}: ${error.steps.join(", ")}\n`);
+      process.exit(3);
+    }
+    throw error;
   }
 
   if (errors.length > 0) {

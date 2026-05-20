@@ -1,14 +1,15 @@
-import type { CommandResult } from "./contract.ts";
+import type { CommandResult, CommandRunnerOptions } from "./contract.ts";
 import { existsSync } from "node:fs";
 import path from "node:path";
 
 export async function defaultRunCommand(
   command: readonly string[],
-  options: { readonly cwd: string },
+  options: CommandRunnerOptions,
 ): Promise<CommandResult> {
   try {
     const proc = Bun.spawn([...command], {
       cwd: options.cwd,
+      env: options.env === undefined ? process.env : { ...process.env, ...options.env },
       stdout: "pipe",
       stderr: "pipe",
     });

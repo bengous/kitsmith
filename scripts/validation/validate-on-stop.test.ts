@@ -1,5 +1,9 @@
 import { expect, test } from "bun:test";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import {
+  runStep,
   runReadOnlyStopSteps,
   stopValidationFiles,
   stopValidationSteps,
@@ -103,3 +107,62 @@ test("stop validation executes allowed read-only steps", () => {
 
   expect(executed).toEqual(["/tmp/project:format:check", "/tmp/project:typecheck"]);
 });
+
+test("stop validation emits JSONL records and captures raw step output in protocol mode", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "kitsmith-stop-protocol-"));
+  const outputDir = path.join(root, ".agents/tmp/hooks/stop/session/run");
+  const relativeOutputDir = ".agents/tmp/hooks/stop/session/run";
+  const capturedStdout: string[] = [];
+  const originalWrite = process.stdout.write.bind(process.stdout);
+  process.stdout.write = ((chunk: string | Uint8Array) => {
+    capturedStdout.push(String(chunk));
+    return true;
+  }) as typeof process.stdout.write;
+
+  try {
+    await writeFile(
+      path.join(root, "package.json"),
+      JSON.stringify({
+        scripts: {
+          noisy:
+            "bun -e \"for (let i = 0; i < 120; i++) console.log('wrote file-' + i); console.error('failed reason'); process.exit(7)\"",
+        },
+      }),
+    );
+    await mkdir(outputDir, { recursive: true });
+
+    const errors: string[] = [];
+    runStep("noisy", root, errors, { runId: "run", outputDir, relativeOutputDir });
+
+    expect(errors[0]).toContain("[noisy]");
+    const record: unknown = JSON.parse(capturedStdout.join(""));
+    expect(recordProperty(record, "protocol")).toBe("kitsmith.stop-validation");
+    expect(recordProperty(record, "version")).toBe(1);
+    expect(recordProperty(record, "type")).toBe("failure");
+    expect(recordProperty(record, "runId")).toBe("run");
+    expect(recordProperty(record, "failureKind")).toBe("validation_failed");
+    expect(recordProperty(record, "step")).toBe("noisy");
+    expect(recordProperty(record, "exitCode")).toBe(7);
+    expect(recordProperty(record, "stdoutTail")).toContain("wrote file-119");
+    expect(recordProperty(record, "stderrTail")).toBe("failed reason");
+    expect(
+      await readFile(path.join(root, String(recordProperty(record, "stdoutRef"))), "utf8"),
+    ).toContain("wrote file-0");
+    expect(
+      await readFile(path.join(root, String(recordProperty(record, "stderrRef"))), "utf8"),
+    ).toContain("failed reason");
+    expect((await stat(outputDir)).mode & 0o777).toBe(0o700);
+    expect(
+      (await stat(path.join(root, String(recordProperty(record, "stdoutRef"))))).mode & 0o777,
+    ).toBe(0o600);
+  } finally {
+    process.stdout.write = originalWrite;
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+function recordProperty(value: unknown, key: string): unknown {
+  return typeof value === "object" && value !== null
+    ? Object.getOwnPropertyDescriptor(value, key)?.value
+    : undefined;
+}

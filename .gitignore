@@ -10,5 +10,6 @@ plans/
 .codex/agents/
 .codex/hooks.json
 .codex/.hooks/
+.agents/tmp/
 .omx/
 *.tgz

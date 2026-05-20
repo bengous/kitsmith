@@ -143,7 +143,7 @@ describe("stop validation", () => {
     }
   });
 
-  test("returns useful failure output when validation fails", async () => {
+  test("blocks non-JSONL validation failure output as an invalid protocol", async () => {
     const root = await makeGitRoot();
     try {
       const result = await runStopValidation(
@@ -166,7 +166,7 @@ describe("stop validation", () => {
         },
       );
 
-      expect(result.blockReason).toContain("Stop validation failed:");
+      expect(result.blockReason).toContain("invalid validation protocol");
       expect(result.blockReason).toContain("[typecheck:frontend] src/routes/index.tsx failed");
       expect(result.blockReason).toContain("lint failed");
     } finally {
@@ -336,6 +336,152 @@ describe("stop validation", () => {
     } finally {
       await rm(root, { recursive: true, force: true });
       await rm(outside, { force: true });
+    }
+  });
+
+  test("uses JSONL validation failure records instead of raw command output", async () => {
+    const root = await makeGitRoot();
+    const stdoutRef = `${root}/.agents/tmp/hooks/stop/session/run/typecheck-stdout.txt`;
+    const noisyOutput = Array.from({ length: 200 }, (_, index) => `wrote file-${index}`).join("\n");
+    try {
+      const result = await runStopValidation(eventFor(root), async (command, options) => {
+        if (command[0] === "git") {
+          return defaultRunCommand(command, options);
+        }
+        return {
+          code: 2,
+          stdout: `${JSON.stringify({
+            protocol: "kitsmith.stop-validation",
+            version: 1,
+            type: "failure",
+            runId: options.env?.["KITSMITH_STOP_RUN_ID"],
+            failureKind: "validation_failed",
+            step: "typecheck",
+            exitCode: 2,
+            stdoutTail: noisyOutput,
+            stdoutRef,
+            actionHint: "Run `bun run typecheck` outside the Stop hook and fix the failure.",
+          })}\n`,
+          stderr: "",
+        };
+      });
+
+      expect(result.blockReason).toContain("Stop validation failed in typecheck");
+      expect(result.blockReason).toContain(`stdout: ${stdoutRef}`);
+      expect(result.blockReason).toContain("Run `bun run typecheck`");
+      expect(result.blockReason).not.toContain("wrote file-199");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("rejects validation records with a mismatched run id", async () => {
+    const root = await makeGitRoot();
+    try {
+      const result = await runStopValidation(eventFor(root), async (command, options) => {
+        if (command[0] === "git") {
+          return defaultRunCommand(command, options);
+        }
+        return {
+          code: 2,
+          stdout: `${JSON.stringify({
+            protocol: "kitsmith.stop-validation",
+            version: 1,
+            type: "failure",
+            runId: "not-the-generated-run-id",
+            failureKind: "validation_failed",
+          })}\n`,
+          stderr: "",
+        };
+      });
+
+      expect(result.blockReason).toContain("invalid validation protocol");
+      expect(result.blockReason).toContain("runId was missing or mismatched");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("rejects unknown validation protocol records", async () => {
+    const root = await makeGitRoot();
+    try {
+      const result = await runStopValidation(eventFor(root), async (command, options) => {
+        if (command[0] === "git") {
+          return defaultRunCommand(command, options);
+        }
+        return {
+          code: 2,
+          stdout: `${JSON.stringify({
+            protocol: "kitsmith.stop-validation",
+            version: 1,
+            type: "progress",
+            runId: options.env?.["KITSMITH_STOP_RUN_ID"],
+          })}\n`,
+          stderr: "",
+        };
+      });
+
+      expect(result.blockReason).toContain("invalid validation protocol");
+      expect(result.blockReason).toContain("unknown protocol record");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("turns unclassified step records into refusal feedback", async () => {
+    const root = await makeGitRoot();
+    try {
+      const result = await runStopValidation(eventFor(root), async (command, options) => {
+        if (command[0] === "git") {
+          return defaultRunCommand(command, options);
+        }
+        return {
+          code: 3,
+          stdout: `${JSON.stringify({
+            protocol: "kitsmith.stop-validation",
+            version: 1,
+            type: "failure",
+            runId: options.env?.["KITSMITH_STOP_RUN_ID"],
+            failureKind: "unclassified_stop_step",
+            step: "agents:sync",
+            exitCode: 3,
+            actionHint: "Classify the Stop validation step as read-only or remove it from Stop.",
+          })}\n`,
+          stderr: "",
+        };
+      });
+
+      expect(result.blockReason).toContain(
+        "Stop validation refused unclassified step: agents:sync",
+      );
+      expect(result.blockReason).toContain(
+        "Classify the Stop validation step as read-only or remove it from Stop.",
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("blocks invalid validation protocol with a bounded raw excerpt", async () => {
+    const root = await makeGitRoot();
+    try {
+      const result = await runStopValidation(eventFor(root), async (command, options) => {
+        if (command[0] === "git") {
+          return defaultRunCommand(command, options);
+        }
+        return {
+          code: 2,
+          stdout: Array.from({ length: 80 }, (_, index) => `raw line ${index}`).join("\n"),
+          stderr: "",
+        };
+      });
+
+      expect(result.blockReason).toContain("invalid validation protocol");
+      expect(result.blockReason).toContain("Raw output excerpt:");
+      expect(result.blockReason).toContain("raw line 79");
+      expect(result.blockReason).not.toContain("raw line 0");
+    } finally {
+      await rm(root, { recursive: true, force: true });
     }
   });
 });

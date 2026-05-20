@@ -76,7 +76,7 @@ describe("templateValues", () => {
     expect(values["FRONTEND_SCRIPTS"]).toContain('"build"');
     expect(values["BIN_BLOCK"]).toBe("");
     expect(values["ROOT_LINT_PATHS"]).toBe(
-      "scripts/ .agents/scripts/hooks/ .codex/hooks/ .claude/hooks/",
+      "scripts/ .agents/scripts/hooks/ .codex/hooks/ .claude/hooks/ .pi/hooks/ .pi/extensions/",
     );
   });
 
@@ -140,7 +140,7 @@ describe("renderTemplate", () => {
     expect(rendered).toContain('"build": "bun run --cwd apps/frontend build"');
     expect(rendered).toContain('"dev": "bun run --cwd apps/frontend dev"');
     expect(rendered).toContain(
-      '"test": "bun run --cwd apps/frontend test && bun test ./.agents/scripts/hooks ./.codex/hooks ./.claude/hooks ./scripts/validation"',
+      '"test": "bun run --cwd apps/frontend test && bun test ./.agents/scripts/hooks ./.codex/hooks ./.claude/hooks ./.pi/hooks ./.pi/extensions ./scripts/validation"',
     );
     expect(rendered).not.toContain('"test:hooks"');
     expect(rendered).not.toContain('"agents:check"');
@@ -184,6 +184,8 @@ describe("renderTemplate", () => {
     expect(rendered).toContain(".agents/scripts/hooks/**/*.ts");
     expect(rendered).toContain(".codex/hooks/**/*.ts");
     expect(rendered).toContain(".claude/hooks/**/*.ts");
+    expect(rendered).toContain(".pi/hooks/**/*.ts");
+    expect(rendered).toContain(".pi/extensions/**/*.ts");
     expect(rendered).not.toContain("src/**/*.ts");
   });
 
@@ -195,6 +197,8 @@ describe("renderTemplate", () => {
     expect(tsconfig).toContain('".agents/scripts/hooks/**/*.ts"');
     expect(tsconfig).toContain('".codex/hooks/**/*.ts"');
     expect(tsconfig).toContain('".claude/hooks/**/*.ts"');
+    expect(tsconfig).toContain('".pi/hooks/**/*.ts"');
+    expect(tsconfig).toContain('".pi/extensions/**/*.ts"');
     expect(tsconfig).not.toContain('"src/**/*.ts"');
     expect(knip).toContain('"apps/frontend"');
     expect(knip).toContain('"@commitlint/cli"');
@@ -203,6 +207,8 @@ describe("renderTemplate", () => {
     expect(knip).toContain('".agents/scripts/hooks/**/*.ts"');
     expect(knip).toContain('".codex/hooks/**/*.ts"');
     expect(knip).toContain('".claude/hooks/**/*.ts"');
+    expect(knip).toContain('".pi/hooks/**/*.ts"');
+    expect(knip).toContain('".pi/extensions/**/*.ts"');
     expect(knip).not.toContain('"src/index.ts"');
   });
 

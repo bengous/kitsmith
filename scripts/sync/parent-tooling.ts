@@ -53,6 +53,18 @@ export const PARENT_TOOLING_SYNC_RULES = [
     preserveExtra: ["AGENTS.md"],
   },
   {
+    name: "Pi hook wrappers",
+    mode: "replace-tree",
+    source: "template-sources/ai/.pi/hooks",
+    target: ".pi/hooks",
+  },
+  {
+    name: "Pi hook extension",
+    mode: "replace-tree",
+    source: "template-sources/ai/.pi/extensions",
+    target: ".pi/extensions",
+  },
+  {
     name: "Codex hook config",
     mode: "replace-file",
     source: "template-sources/ai/.codex/config.toml",

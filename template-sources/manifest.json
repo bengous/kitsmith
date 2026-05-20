@@ -43,10 +43,16 @@
   "ai": {
     "copied": [
       ".mcp.json",
+      ".pi/extensions/kitsmith-hooks.ts",
+      ".pi/hooks/guard-destructive.ts",
+      ".pi/hooks/guard-edit-paths.ts",
+      ".pi/hooks/post-edit-quality.ts",
+      ".pi/hooks/stop-validate.ts",
       ".agents/scripts/hooks/adapters/adapters.test.ts",
       ".agents/scripts/hooks/adapters/claude.ts",
       ".agents/scripts/hooks/adapters/codex.ts",
-      ".agents/scripts/hooks/adapters/pi.example.ts",
+      ".agents/scripts/hooks/adapters/pi.ts",
+      ".agents/scripts/hooks/adapters/pi-extension.test.ts",
       ".agents/scripts/hooks/core/command-runner.test.ts",
       ".agents/scripts/hooks/core/command-runner.ts",
       ".agents/scripts/hooks/core/contract.ts",

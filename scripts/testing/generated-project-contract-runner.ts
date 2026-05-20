@@ -395,7 +395,13 @@ async function assertAiContract(
   assertPathExists(root, ".agents/scripts/hooks/core/post-edit-quality.ts");
   assertPathExists(root, ".agents/scripts/hooks/adapters/codex.ts");
   assertPathExists(root, ".agents/scripts/hooks/adapters/claude.ts");
-  assertPathExists(root, ".agents/scripts/hooks/adapters/pi.example.ts");
+  assertPathExists(root, ".agents/scripts/hooks/adapters/pi.ts");
+  assertPathExists(root, ".agents/scripts/hooks/adapters/pi-extension.test.ts");
+  assertPathExists(root, ".pi/extensions/kitsmith-hooks.ts");
+  assertPathExists(root, ".pi/hooks/guard-destructive.ts");
+  assertPathExists(root, ".pi/hooks/guard-edit-paths.ts");
+  assertPathExists(root, ".pi/hooks/post-edit-quality.ts");
+  assertPathExists(root, ".pi/hooks/stop-validate.ts");
   assertPathExists(root, ".agents/scripts/hooks/runtime/run-post-edit-hook.ts");
   assertPathExists(root, ".agents/scripts/hooks/runtime/run-pre-tool-hook.ts");
   assertPathExists(root, ".agents/scripts/hooks/runtime/run-stop-hook.ts");
@@ -462,10 +468,15 @@ async function assertAiContract(
   await assertFileContains(root, "lefthook.yml", '- ".agents/scripts/hooks/**/*.ts"');
   await assertFileContains(root, "lefthook.yml", '- ".codex/hooks/**/*.ts"');
   await assertFileContains(root, "lefthook.yml", '- ".claude/hooks/**/*.ts"');
+  await assertFileContains(root, "lefthook.yml", '- ".pi/hooks/**/*.ts"');
+  await assertFileContains(root, "lefthook.yml", '- ".pi/extensions/**/*.ts"');
+  assertPathMissing(root, ".pi/extensions/kitsmith-hooks.test.ts");
   await assertFileContains(root, ".oxlintrc.jsonc", '"!.agents/scripts/hooks/**"');
   await assertFileContains(root, "tsconfig.json", '".agents/scripts/hooks/**/*.ts"');
   await assertFileContains(root, "tsconfig.json", '".codex/hooks/**/*.ts"');
   await assertFileContains(root, "tsconfig.json", '".claude/hooks/**/*.ts"');
+  await assertFileContains(root, "tsconfig.json", '".pi/hooks/**/*.ts"');
+  await assertFileContains(root, "tsconfig.json", '".pi/extensions/**/*.ts"');
   await assertFileContains(root, ".dependency-cruiser.cjs", "NATIVE_HOOK_WRAPPER_ALLOWED_IMPORT");
   await assertFileContains(
     root,
@@ -537,7 +548,7 @@ async function assertGeneratedAiStopHookContract(root: string): Promise<void> {
       await git(["config", "user.email", "test@example.com"]);
       await git(["config", "user.name", "Test User"]);
       await git(["add", "."]);
-      await git(["commit", "-m", "Initial"]);
+      await git(["commit", "--no-verify", "-m", "Initial"]);
 
       const result = await runStopValidation(
         { agent: "codex", hook: "stop", cwd: process.cwd(), sessionId: "contract", touchedPathCandidates: [] },

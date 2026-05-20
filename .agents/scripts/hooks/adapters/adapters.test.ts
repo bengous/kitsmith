@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { claudeAdapter, parseClaudeHookInput } from "./claude.ts";
 import { codexAdapter, parseCodexHookInput } from "./codex.ts";
-import { parsePiHookInput } from "./pi.example.ts";
+import { piAdapter, parsePiHookInput } from "./pi.ts";
 
 describe("hook adapters", () => {
   test("Codex maps native fields to canonical hook events", () => {
@@ -139,6 +139,7 @@ describe("hook adapters", () => {
   test("adapter capabilities describe updatedToolOutput support explicitly", () => {
     expect(claudeAdapter.capabilities.updatedToolOutput).toBeTrue();
     expect(codexAdapter.capabilities.updatedToolOutput).toBeFalse();
+    expect(piAdapter.capabilities.updatedToolOutput).toBeFalse();
   });
 
   test("adapters translate native recursive-stop fields to the canonical event", () => {
@@ -157,13 +158,15 @@ describe("hook adapters", () => {
     });
   });
 
-  test("Pi example stays a tiny canonical-event adapter", () => {
+  test("Pi maps extension hook payloads to canonical events", () => {
     expect(
       parsePiHookInput(
         {
           projectRoot: "/repo",
           runId: "run",
           eventId: "event",
+          toolName: "edit",
+          command: "echo test",
           edit: { paths: ["src/a.ts", "scripts/b.ts"] },
         },
         "post-edit",
@@ -174,7 +177,10 @@ describe("hook adapters", () => {
       cwd: "/repo",
       sessionId: "run",
       toolCallId: "event",
+      toolName: "edit",
       touchedPathCandidates: ["src/a.ts", "scripts/b.ts"],
+      patchText: "echo test",
+      toolCommand: "echo test",
     });
   });
 });

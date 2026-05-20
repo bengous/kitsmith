@@ -6,9 +6,9 @@ import type {
   AgentHookEvent,
   AgentHookKind,
 } from "../core/contract.ts";
-import { isRecord, stringArray } from "../runtime/unknown-value.ts";
+import { isRecord, stringArray, valueAsString } from "../runtime/unknown-value.ts";
 
-export const piExampleAdapter: AgentAdapter = {
+export const piAdapter: AgentAdapter = {
   agent: "pi",
   capabilities: { updatedToolOutput: false },
   readEvent: readPiHookEvent,
@@ -35,17 +35,25 @@ export function parsePiHookInput(
   const projectRoot = typeof value["projectRoot"] === "string" ? value["projectRoot"] : undefined;
   const runId = typeof value["runId"] === "string" ? value["runId"] : undefined;
   const eventId = typeof value["eventId"] === "string" ? value["eventId"] : undefined;
+  const eventHook = valueAsString(value["hook"]);
+  const toolName = valueAsString(value["toolName"]);
+  const command = valueAsString(value["command"]);
   const edit = isRecord(value["edit"]) ? value["edit"] : {};
-  const path = typeof edit["path"] === "string" ? edit["path"] : undefined;
+  const path = valueAsString(edit["path"]);
   const paths = stringArray(edit["paths"]);
 
   return {
     agent: "pi",
-    hook,
+    hook:
+      eventHook === "pre-tool" || eventHook === "post-edit" || eventHook === "stop"
+        ? eventHook
+        : hook,
     ...(projectRoot === undefined ? {} : { cwd: projectRoot }),
     ...(runId === undefined ? {} : { sessionId: runId }),
     ...(eventId === undefined ? {} : { toolCallId: eventId }),
+    ...(toolName === undefined ? {} : { toolName }),
     touchedPathCandidates: [...(path === undefined ? [] : [path]), ...paths],
+    ...(command === undefined ? {} : { patchText: command, toolCommand: command }),
   };
 }
 

@@ -111,6 +111,24 @@ function rootToolingEntries(cwd: string): RootToolingEntry[] {
           },
         ]
       : []),
+    ...(pathExists(cwd, ".pi/hooks")
+      ? [
+          {
+            lintPath: ".pi/hooks/",
+            archPath: "./.pi/hooks",
+            formatGlob: ".pi/hooks/**/*.{ts,tsx,js,jsx,mjs}",
+          },
+        ]
+      : []),
+    ...(pathExists(cwd, ".pi/extensions")
+      ? [
+          {
+            lintPath: ".pi/extensions/",
+            archPath: "./.pi/extensions",
+            formatGlob: ".pi/extensions/**/*.{ts,tsx,js,jsx,mjs}",
+          },
+        ]
+      : []),
   ];
 }
 
@@ -141,7 +159,9 @@ function rootTestSubcommands(cwd: string): ValidationSubcommand[] {
   const hasAgentHookTests =
     pathExists(cwd, ".agents/scripts/hooks") ||
     pathExists(cwd, ".codex/hooks") ||
-    pathExists(cwd, ".claude/hooks");
+    pathExists(cwd, ".claude/hooks") ||
+    pathExists(cwd, ".pi/hooks") ||
+    pathExists(cwd, ".pi/extensions");
 
   return [
     ...(pathExists(cwd, "src") ? [{ command: [process.execPath, "test", "./src"] }] : []),
@@ -157,6 +177,8 @@ function rootTestSubcommands(cwd: string): ValidationSubcommand[] {
               ...(pathExists(cwd, ".codex/hooks") ? ["./.codex/hooks"] : []),
               ...(pathExists(cwd, ".claude/hooks") ? ["./.claude/hooks"] : []),
               ...(pathExists(cwd, ".agents/scripts/hooks") ? ["./.agents/scripts/hooks"] : []),
+              ...(pathExists(cwd, ".pi/hooks") ? ["./.pi/hooks"] : []),
+              ...(pathExists(cwd, ".pi/extensions") ? ["./.pi/extensions"] : []),
             ],
           },
         ]

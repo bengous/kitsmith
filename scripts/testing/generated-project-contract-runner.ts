@@ -397,7 +397,7 @@ async function assertAiContract(
   }
   assertPathExists(root, ".claude/rules/validation-tooling.md");
   assertPathExists(root, "AGENTS.md");
-  assertPathExists(root, ".agents/scripts/hooks/AGENTS.md");
+  assertPathExists(root, ".agents/hooks/AGENTS.md");
   assertPathExists(root, ".codex/hooks/AGENTS.md");
   assertPathExists(root, ".claude/hooks/AGENTS.md");
   assertPathExists(root, "scripts/quality/AGENTS.md");
@@ -415,21 +415,21 @@ async function assertAiContract(
   assertPathExists(root, ".claude/hooks/guard-destructive.ts");
   assertPathExists(root, ".claude/hooks/post-edit-quality.ts");
   assertPathExists(root, ".claude/hooks/stop-validate.ts");
-  assertPathExists(root, ".agents/scripts/hooks/core/contract.ts");
-  assertPathExists(root, ".agents/scripts/hooks/core/post-edit-quality.ts");
-  assertPathExists(root, ".agents/scripts/hooks/adapters/codex.ts");
-  assertPathExists(root, ".agents/scripts/hooks/adapters/claude.ts");
-  assertPathExists(root, ".agents/scripts/hooks/adapters/pi.example.ts");
-  assertPathExists(root, ".agents/scripts/hooks/runtime/run-post-edit-hook.ts");
-  assertPathExists(root, ".agents/scripts/hooks/runtime/run-pre-tool-hook.ts");
-  assertPathExists(root, ".agents/scripts/hooks/runtime/run-stop-hook.ts");
+  assertPathExists(root, ".agents/hooks/core/contract.ts");
+  assertPathExists(root, ".agents/hooks/core/post-edit-quality.ts");
+  assertPathExists(root, ".agents/hooks/adapters/codex.ts");
+  assertPathExists(root, ".agents/hooks/adapters/claude.ts");
+  assertPathExists(root, ".agents/hooks/adapters/pi.example.ts");
+  assertPathExists(root, ".agents/hooks/runtime/run-post-edit-hook.ts");
+  assertPathExists(root, ".agents/hooks/runtime/run-pre-tool-hook.ts");
+  assertPathExists(root, ".agents/hooks/runtime/run-stop-hook.ts");
   assertPathExists(root, "scripts/validation/validate-on-stop.ts");
   assertPathExists(root, "scripts/validation/shared/quality-workspace.ts");
   assertPathExists(root, "scripts/validation/shared/repo-path.ts");
   assertPathExists(root, "scripts/agents/sync-agents-md.ts");
 
   await assertFileContains(root, "CLAUDE.md", "Fill this file with project-specific context");
-  await assertFileContains(root, ".claude/rules/agent-hook-runtime.md", ".agents/scripts/hooks");
+  await assertFileContains(root, ".claude/rules/agent-hook-runtime.md", ".agents/hooks");
   await assertFileContains(root, ".claude/rules/native-hook-wrappers.md", "Keep wrappers thin");
   await assertFileContains(root, ".codex/config.toml", ".codex/hooks/guard-destructive.ts");
   await assertFileContains(
@@ -447,12 +447,12 @@ async function assertAiContract(
   await assertFileContains(
     root,
     ".codex/hooks/guard-destructive.ts",
-    "../../.agents/scripts/hooks/adapters/codex.ts",
+    "../../.agents/hooks/adapters/codex.ts",
   );
   await assertFileContains(
     root,
     ".claude/hooks/guard-destructive.ts",
-    "../../.agents/scripts/hooks/adapters/claude.ts",
+    "../../.agents/hooks/adapters/claude.ts",
   );
   await assertGeneratedAgentsManifest(root);
   await assertFileContains(root, "scripts/agents/sync-agents-md.ts", "toPosixPath");
@@ -463,38 +463,26 @@ async function assertAiContract(
   await assertGeneratedAiStopHookContract(root);
   await assertFileContains(
     root,
-    ".agents/scripts/hooks/core/post-edit-quality.ts",
+    ".agents/hooks/core/post-edit-quality.ts",
     "resolveGeneratedProjectWorkspace",
   );
-  await assertFileContains(
-    root,
-    ".agents/scripts/hooks/core/post-edit-quality.ts",
-    "hasRoutableExtension",
-  );
-  await assertFileExcludes(
-    root,
-    ".agents/scripts/hooks/core/post-edit-quality.ts",
-    "isProductSurface",
-  );
-  await assertFileExcludes(
-    root,
-    ".agents/scripts/hooks/core/post-edit-quality.ts",
-    "template-sources/",
-  );
+  await assertFileContains(root, ".agents/hooks/core/post-edit-quality.ts", "hasRoutableExtension");
+  await assertFileExcludes(root, ".agents/hooks/core/post-edit-quality.ts", "isProductSurface");
+  await assertFileExcludes(root, ".agents/hooks/core/post-edit-quality.ts", "template-sources/");
   await assertFileContains(root, ".claude/settings.json", "$CLAUDE_PROJECT_DIR");
   await assertFileExcludes(root, ".claude/settings.json", ".codex/");
-  await assertFileContains(root, "lefthook.yml", '- ".agents/scripts/hooks/**/*.ts"');
+  await assertFileContains(root, "lefthook.yml", '- ".agents/hooks/**/*.ts"');
   await assertFileContains(root, "lefthook.yml", '- ".codex/hooks/**/*.ts"');
   await assertFileContains(root, "lefthook.yml", '- ".claude/hooks/**/*.ts"');
-  await assertFileContains(root, ".oxlintrc.jsonc", '"!.agents/scripts/hooks/**"');
-  await assertFileContains(root, "tsconfig.json", '".agents/scripts/hooks/**/*.ts"');
+  await assertFileContains(root, ".oxlintrc.jsonc", '"!.agents/hooks/**"');
+  await assertFileContains(root, "tsconfig.json", '".agents/hooks/**/*.ts"');
   await assertFileContains(root, "tsconfig.json", '".codex/hooks/**/*.ts"');
   await assertFileContains(root, "tsconfig.json", '".claude/hooks/**/*.ts"');
   await assertFileContains(root, ".dependency-cruiser.cjs", "NATIVE_HOOK_WRAPPER_ALLOWED_IMPORT");
   await assertFileContains(
     root,
     ".dependency-cruiser.cjs",
-    "^\\\\.agents/scripts/hooks/(adapters|runtime)/",
+    "^\\\\.agents/hooks/(adapters|runtime)/",
   );
 
   assertDefined(packageScripts["agents:sync"], "agents:sync script");
@@ -512,7 +500,7 @@ async function assertGeneratedAgentsManifest(root: string): Promise<void> {
   const hasSourceAgents = await Bun.file(join(root, "src/AGENTS.md")).exists();
   const expectedGenerated = [
     "AGENTS.md",
-    ".agents/scripts/hooks/AGENTS.md",
+    ".agents/hooks/AGENTS.md",
     ".claude/hooks/AGENTS.md",
     ".codex/hooks/AGENTS.md",
     ...(hasFrontendAgents ? ["apps/frontend/AGENTS.md"] : []),
@@ -526,7 +514,7 @@ async function assertGeneratedAgentsManifest(root: string): Promise<void> {
   if (hasSourceAgents) {
     assertObjectHasKey(outputs, "src/AGENTS.md", "agents manifest outputs");
   }
-  assertObjectHasKey(outputs, ".agents/scripts/hooks/AGENTS.md", "agents manifest outputs");
+  assertObjectHasKey(outputs, ".agents/hooks/AGENTS.md", "agents manifest outputs");
   assertObjectHasKey(outputs, ".codex/hooks/AGENTS.md", "agents manifest outputs");
   assertObjectHasKey(outputs, ".claude/hooks/AGENTS.md", "agents manifest outputs");
   if (hasFrontendAgents) {
@@ -549,8 +537,8 @@ async function assertGeneratedAiStopHookContract(root: string): Promise<void> {
     `
       import { writeFile } from "node:fs/promises";
       import path from "node:path";
-      import { defaultRunCommand } from "./.agents/scripts/hooks/core/command-runner.ts";
-      import { runStopValidation } from "./.agents/scripts/hooks/core/stop-validation.ts";
+      import { defaultRunCommand } from "./.agents/hooks/core/command-runner.ts";
+      import { runStopValidation } from "./.agents/hooks/core/stop-validation.ts";
 
       async function git(args) {
         const result = await defaultRunCommand(["git", ...args], { cwd: process.cwd() });
@@ -584,8 +572,8 @@ async function assertGeneratedAiStopHookContract(root: string): Promise<void> {
   await runGeneratedProjectScript(
     root,
     `
-      import { defaultRunCommand } from "./.agents/scripts/hooks/core/command-runner.ts";
-      import { runStopValidation } from "./.agents/scripts/hooks/core/stop-validation.ts";
+      import { defaultRunCommand } from "./.agents/hooks/core/command-runner.ts";
+      import { runStopValidation } from "./.agents/hooks/core/stop-validation.ts";
 
       const noisyOutput = Array.from({ length: 200 }, (_, index) => "wrote file-" + index).join("\\n");
       const result = await runStopValidation(

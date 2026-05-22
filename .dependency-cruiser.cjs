@@ -2,9 +2,9 @@ const recommended = require("./node_modules/dependency-cruiser/configs/recommend
 
 const NON_TEST_TS = "\\.(test|e2e\\.test)\\.ts$";
 const PRODUCTION_TOOLING_TS =
-  "^(src/(?!testing/)|scripts/(?!testing/)|\\.agents/scripts/hooks/|\\.codex/hooks/|\\.claude/hooks/).+\\.ts$";
+  "^(src/(?!testing/)|scripts/(?!testing/)|\\.agents/hooks/|\\.codex/hooks/|\\.claude/hooks/).+\\.ts$";
 const NATIVE_HOOK_WRAPPER_TS = "^\\.(codex|claude)/hooks/[^/]+\\.ts$";
-const NATIVE_HOOK_WRAPPER_ALLOWED_IMPORT = "^\\.agents/scripts/hooks/(adapters|runtime)/";
+const NATIVE_HOOK_WRAPPER_ALLOWED_IMPORT = "^\\.agents/hooks/(adapters|runtime)/";
 const ORPHAN_EXCEPTIONS = [
   "(^|/)\\.[^/]+\\.(js|cjs|mjs|ts|json)$",
   "^src/index\\.ts$",

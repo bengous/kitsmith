@@ -17,7 +17,7 @@ It generates projects by starting from native ecosystem bootstraps, then normali
 - `scripts/` contains repo automation, validation, quality checks, AGENTS sync, parent-tooling sync, release preparation, and smoke tests.
 - `docs/product/` contains domain contracts and ubiquitous language for product behavior.
 - `docs/maintainer/` contains maintainer runbooks; it is guidance, not the primary source for agent-facing policy.
-- `CLAUDE.md` and `.claude/rules/` are the source of truth for Codex-facing generated `AGENTS.md` files.
+- `CLAUDE.md` and `.claude/rules/` are the source of truth for agents. Other harnesses in the repository use these rules to generate `AGENTS.md` files.
 
 ## Change Routing
 

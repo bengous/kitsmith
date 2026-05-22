@@ -13,3 +13,5 @@ plans/
 .agents/tmp/
 .omx/
 *.tgz
+.itw/
+# If you do want to track .itw, remove the line above. If you do not want to track it but not add this line to gitignore, move it to .git/info/exclude.

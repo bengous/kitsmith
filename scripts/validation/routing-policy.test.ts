@@ -92,9 +92,7 @@ describe("routing policy", () => {
       lintFix: false,
       formatMode: "check",
     });
-    expect(
-      resolveQualityWorkspace(".agents/scripts/hooks/core/contract.ts", liveContext),
-    ).toMatchObject({
+    expect(resolveQualityWorkspace(".agents/hooks/core/contract.ts", liveContext)).toMatchObject({
       name: "root",
       lint: true,
       lintFix: true,
@@ -125,7 +123,7 @@ describe("routing policy", () => {
     const paths = [
       "src/index.ts",
       "scripts/validation/validate.ts",
-      ".agents/scripts/hooks/core/contract.ts",
+      ".agents/hooks/core/contract.ts",
       ".codex/hooks/lib.ts",
       ".claude/hooks/guard-destructive.ts",
       "apps/frontend/src/main.tsx",

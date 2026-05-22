@@ -1,11 +1,11 @@
 ---
 paths:
-  - ".agents/scripts/hooks/**/*.ts"
+  - ".agents/hooks/**/*.ts"
 ---
 
 ## Shared Agent Hook Runtime
 
-- `.agents/scripts/hooks` owns shared agent hook behavior.
+- `.agents/hooks` owns shared agent hook behavior.
 - Keep harness-agnostic contracts in the shared layer.
 - Keep business behavior in core modules; keep protocol translation in adapters.
 - Preserve clear outcomes: allow, block, formatted output, updated tool output, and validation diagnostics should be explicit contract fields.

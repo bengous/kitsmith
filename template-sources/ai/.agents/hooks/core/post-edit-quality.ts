@@ -1,4 +1,4 @@
-import type { Workspace } from "../../../../scripts/validation/shared/quality-workspace.ts";
+import type { Workspace } from "../../../scripts/validation/shared/quality-workspace.ts";
 import type {
   CommandResult,
   CommandRunner,
@@ -11,7 +11,7 @@ import path from "node:path";
 import {
   hasRoutableExtension,
   resolveGeneratedProjectWorkspace,
-} from "../../../../scripts/validation/shared/quality-workspace.ts";
+} from "../../../scripts/validation/shared/quality-workspace.ts";
 import { commandOutput, defaultRunCommand, localTool, repoRoot, tail } from "./command-runner.ts";
 import { forbiddenTouchedPaths, generatedPathMessage } from "./generated-files.ts";
 import { extractTouchedPaths, readTouchedPaths, recordTouchedPaths } from "./touched-paths.ts";

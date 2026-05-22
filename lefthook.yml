@@ -15,7 +15,7 @@ pre-commit:
       glob:
         - "src/**/*.ts"
         - "scripts/**/*.ts"
-        - ".agents/scripts/hooks/**/*.ts"
+        - ".agents/hooks/**/*.ts"
         - ".claude/hooks/**/*.ts"
       run: ./node_modules/.bin/oxlint -c .oxlintrc.jsonc --fix --quiet --format=unix {staged_files} && ./node_modules/.bin/oxfmt --write -c .oxfmtrc.jsonc {staged_files}
       stage_fixed: true
@@ -38,7 +38,7 @@ pre-commit:
       glob:
         - "src/**/*.ts"
         - "scripts/**/*.ts"
-        - ".agents/scripts/hooks/**/*.ts"
+        - ".agents/hooks/**/*.ts"
         - ".codex/hooks/**/*.ts"
         - ".claude/hooks/**/*.ts"
       run: bun scripts/validation/typecheck-staged.ts

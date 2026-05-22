@@ -84,12 +84,12 @@ function rootToolingEntries(cwd: string): RootToolingEntry[] {
       archPath: "scripts",
       formatGlob: "scripts/**/*.{ts,tsx,js,jsx,mjs}",
     },
-    ...(pathExists(cwd, ".agents/scripts/hooks")
+    ...(pathExists(cwd, ".agents/hooks")
       ? [
           {
-            lintPath: ".agents/scripts/hooks/",
-            archPath: "./.agents/scripts/hooks",
-            formatGlob: ".agents/scripts/hooks/**/*.{ts,tsx,js,jsx,mjs}",
+            lintPath: ".agents/hooks/",
+            archPath: "./.agents/hooks",
+            formatGlob: ".agents/hooks/**/*.{ts,tsx,js,jsx,mjs}",
           },
         ]
       : []),
@@ -139,7 +139,7 @@ function frontendStep(
 
 function rootTestSubcommands(cwd: string): ValidationSubcommand[] {
   const hasAgentHookTests =
-    pathExists(cwd, ".agents/scripts/hooks") ||
+    pathExists(cwd, ".agents/hooks") ||
     pathExists(cwd, ".codex/hooks") ||
     pathExists(cwd, ".claude/hooks");
 
@@ -156,7 +156,7 @@ function rootTestSubcommands(cwd: string): ValidationSubcommand[] {
               "test",
               ...(pathExists(cwd, ".codex/hooks") ? ["./.codex/hooks"] : []),
               ...(pathExists(cwd, ".claude/hooks") ? ["./.claude/hooks"] : []),
-              ...(pathExists(cwd, ".agents/scripts/hooks") ? ["./.agents/scripts/hooks"] : []),
+              ...(pathExists(cwd, ".agents/hooks") ? ["./.agents/hooks"] : []),
             ],
           },
         ]

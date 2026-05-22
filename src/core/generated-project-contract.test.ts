@@ -30,7 +30,7 @@ test("buildGeneratedProjectContract models root and frontend package facts", () 
   expect(contract.packageJson.bin).toEqual({ "forge-tanstack-ai-effect": "./src/index.ts" });
   expect(contract.packageJson.workspaces).toEqual(["apps/*"]);
   expect(contract.packageJson.scripts["test"]).toBe(
-    "bun test ./src && bun run --cwd apps/frontend test && bun test ./.agents/scripts/hooks ./.codex/hooks ./.claude/hooks ./scripts/validation",
+    "bun test ./src && bun run --cwd apps/frontend test && bun test ./.agents/hooks ./.codex/hooks ./.claude/hooks ./scripts/validation",
   );
   expect(contract.packageJson.scripts["build"]).toBe("bun run --cwd apps/frontend build");
   expect(contract.packageJson.scripts["agents:sync"]).toBe(
@@ -44,7 +44,7 @@ test("buildGeneratedProjectContract models root and frontend package facts", () 
   expect(contract.rootTooling.tsconfigInclude).toEqual([
     "src/**/*.ts",
     "scripts/**/*.ts",
-    ".agents/scripts/hooks/**/*.ts",
+    ".agents/hooks/**/*.ts",
     ".codex/hooks/**/*.ts",
     ".claude/hooks/**/*.ts",
   ]);

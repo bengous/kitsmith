@@ -11,12 +11,10 @@ const CONTEXT = {
 
 describe("quality scope policy", () => {
   test("routes shared agent hook sources as project scripts", () => {
-    expect(classifyRoutingPath(".agents/scripts/hooks/core/contract.ts", CONTEXT)).toBe("scripts");
+    expect(classifyRoutingPath(".agents/hooks/core/contract.ts", CONTEXT)).toBe("scripts");
   });
 
   test("runs root quality tooling for shared agent hook sources", () => {
-    expect(resolveQualityWorkspace(".agents/scripts/hooks/core/contract.ts", CONTEXT)?.name).toBe(
-      "root",
-    );
+    expect(resolveQualityWorkspace(".agents/hooks/core/contract.ts", CONTEXT)?.name).toBe("root");
   });
 });

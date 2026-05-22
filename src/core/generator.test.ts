@@ -121,7 +121,7 @@ describe("describeGeneratedProject", () => {
     expect(description.generatedFileSpecs).toContainEqual({
       owner: "preset",
       presetName: "ai",
-      relativePath: ".agents/scripts/hooks/core/contract.ts",
+      relativePath: ".agents/hooks/core/contract.ts",
     });
     expect(description.generatedFileSpecs).toContainEqual({
       owner: "preset",
@@ -175,8 +175,8 @@ describe("describeGeneratedProject", () => {
     expect(specsByName["base"]).toContain("scripts/validation/shared/quality-scope-policy.ts");
     expect(specsByName["base"]).not.toContain("scripts/validation/shared/quality-workspace.ts");
     expect(specsByName["base"]).not.toContain("scripts/validation/routing-policy.ts");
-    expect(specsByName["ai"]).toContain(".agents/scripts/hooks/core/contract.ts");
-    expect(specsByName["ai"]).toContain(".agents/scripts/hooks/adapters/pi.example.ts");
+    expect(specsByName["ai"]).toContain(".agents/hooks/core/contract.ts");
+    expect(specsByName["ai"]).toContain(".agents/hooks/adapters/pi.example.ts");
     expect(specsByName["ai"]).toContain(".claude/rules/validation-tooling.md");
     expect(specsByName["ai"]).toContain("scripts/validation/shared/quality-workspace.ts");
     expect(specsByName["ai"]).toContain("scripts/validation/shared/repo-path.ts");

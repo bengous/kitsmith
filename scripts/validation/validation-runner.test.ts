@@ -102,7 +102,7 @@ describe("generated validation runner command resolution", () => {
     try {
       mkdirSync(join(dir, "src"), { recursive: true });
       mkdirSync(join(dir, "apps/frontend"), { recursive: true });
-      mkdirSync(join(dir, ".agents/scripts/hooks"), { recursive: true });
+      mkdirSync(join(dir, ".agents/hooks"), { recursive: true });
       mkdirSync(join(dir, ".codex/hooks"), { recursive: true });
       mkdirSync(join(dir, ".claude/hooks"), { recursive: true });
       writeFileSync(join(dir, "apps/frontend/package.json"), "{}");
@@ -119,7 +119,7 @@ describe("generated validation runner command resolution", () => {
               "test",
               "./.codex/hooks",
               "./.claude/hooks",
-              "./.agents/scripts/hooks",
+              "./.agents/hooks",
             ],
           },
         ],
@@ -181,7 +181,7 @@ describe("generated validation runner command resolution", () => {
     try {
       mkdirSync(join(dir, "src"), { recursive: true });
       mkdirSync(join(dir, "scripts"), { recursive: true });
-      mkdirSync(join(dir, ".agents/scripts/hooks"), { recursive: true });
+      mkdirSync(join(dir, ".agents/hooks"), { recursive: true });
       mkdirSync(join(dir, ".codex/hooks"), { recursive: true });
       mkdirSync(join(dir, ".claude/hooks"), { recursive: true });
 
@@ -193,12 +193,12 @@ describe("generated validation runner command resolution", () => {
         "--format=unix",
         "src/",
         "scripts/",
-        ".agents/scripts/hooks/",
+        ".agents/hooks/",
         ".codex/hooks/",
         ".claude/hooks/",
       ]);
       expect(resolveValidationStepCommand("format:check", dir)?.command).toContain(
-        ".agents/scripts/hooks/**/*.{ts,tsx,js,jsx,mjs}",
+        ".agents/hooks/**/*.{ts,tsx,js,jsx,mjs}",
       );
       expect(resolveValidationStepCommand("format:check", dir)?.command).toContain(
         ".codex/hooks/**/*.{ts,tsx,js,jsx,mjs}",

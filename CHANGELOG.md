@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.4 - 2026-05-22
+
+### Changed
+
+- Generate agent hook runtime files under `.agents/hooks` instead of
+  `.agents/scripts/hooks` so scaffolded projects avoid an unnecessary directory
+  level.
+
 ## 0.4.3 - 2026-05-21
 
 ### Fixed

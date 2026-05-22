@@ -34,8 +34,8 @@ export const PARENT_TOOLING_SYNC_RULES = [
   {
     name: "shared agent hook runtime",
     mode: "replace-tree",
-    source: "template-sources/ai/.agents/scripts/hooks",
-    target: ".agents/scripts/hooks",
+    source: "template-sources/ai/.agents/hooks",
+    target: ".agents/hooks",
     preserveExtra: ["AGENTS.md"],
   },
   {

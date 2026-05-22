@@ -75,9 +75,7 @@ describe("templateValues", () => {
     expect(values["AI_SCRIPTS"]).not.toContain('"agents:check"');
     expect(values["FRONTEND_SCRIPTS"]).toContain('"build"');
     expect(values["BIN_BLOCK"]).toBe("");
-    expect(values["ROOT_LINT_PATHS"]).toBe(
-      "scripts/ .agents/scripts/hooks/ .codex/hooks/ .claude/hooks/",
-    );
+    expect(values["ROOT_LINT_PATHS"]).toBe("scripts/ .agents/hooks/ .codex/hooks/ .claude/hooks/");
   });
 
   test("includes Effect tokens when effect is enabled", () => {
@@ -140,7 +138,7 @@ describe("renderTemplate", () => {
     expect(rendered).toContain('"build": "bun run --cwd apps/frontend build"');
     expect(rendered).toContain('"dev": "bun run --cwd apps/frontend dev"');
     expect(rendered).toContain(
-      '"test": "bun run --cwd apps/frontend test && bun test ./.agents/scripts/hooks ./.codex/hooks ./.claude/hooks ./scripts/validation"',
+      '"test": "bun run --cwd apps/frontend test && bun test ./.agents/hooks ./.codex/hooks ./.claude/hooks ./scripts/validation"',
     );
     expect(rendered).not.toContain('"test:hooks"');
     expect(rendered).not.toContain('"agents:check"');
@@ -181,7 +179,7 @@ describe("renderTemplate", () => {
     const rendered = renderTemplate("lefthook.yml.tpl", frontendAiContext);
     expect(rendered).toContain("frontend-oxc:");
     expect(rendered).toContain("apps/frontend/**/*.{ts,tsx}");
-    expect(rendered).toContain(".agents/scripts/hooks/**/*.ts");
+    expect(rendered).toContain(".agents/hooks/**/*.ts");
     expect(rendered).toContain(".codex/hooks/**/*.ts");
     expect(rendered).toContain(".claude/hooks/**/*.ts");
     expect(rendered).not.toContain("src/**/*.ts");
@@ -192,7 +190,7 @@ describe("renderTemplate", () => {
     const knip = renderTemplate("knip.jsonc.tpl", frontendAiContext);
 
     expect(tsconfig).toContain('"scripts/**/*.ts"');
-    expect(tsconfig).toContain('".agents/scripts/hooks/**/*.ts"');
+    expect(tsconfig).toContain('".agents/hooks/**/*.ts"');
     expect(tsconfig).toContain('".codex/hooks/**/*.ts"');
     expect(tsconfig).toContain('".claude/hooks/**/*.ts"');
     expect(tsconfig).not.toContain('"src/**/*.ts"');
@@ -200,7 +198,7 @@ describe("renderTemplate", () => {
     expect(knip).toContain('"@commitlint/cli"');
     expect(knip).toContain('"jscpd"');
     expect(knip).toContain('"lefthook"');
-    expect(knip).toContain('".agents/scripts/hooks/**/*.ts"');
+    expect(knip).toContain('".agents/hooks/**/*.ts"');
     expect(knip).toContain('".codex/hooks/**/*.ts"');
     expect(knip).toContain('".claude/hooks/**/*.ts"');
     expect(knip).not.toContain('"src/index.ts"');

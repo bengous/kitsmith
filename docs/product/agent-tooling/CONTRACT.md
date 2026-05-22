@@ -12,7 +12,7 @@ agent tooling and Kitsmith parent repo tooling sync.
 - Generated agent files and manifest: `AGENTS.md`, nested `AGENTS.md` files, and
   `.agents/agents-md-manifest.json`.
 - Agent sync/check: `scripts/agents/sync-agents-md.ts`.
-- Hook runtime and wrappers: `.agents/scripts/hooks/`, `.codex/hooks/`, `.claude/hooks/`.
+- Hook runtime and wrappers: `.agents/hooks/`, `.codex/hooks/`, `.claude/hooks/`.
 - Generated AI sources: `template-sources/ai/`.
 - Parent sync: `scripts/sync/parent-tooling.ts`.
 - Generated project contract assertions: `src/core/project-contract.test.ts`.
@@ -58,7 +58,7 @@ agent tooling and Kitsmith parent repo tooling sync.
 8. Native hook wrappers stay thin and delegate to shared hook runtime files.
 
    Evidence: generated project contract assertions for `.codex/hooks/*`, `.claude/hooks/*`, and
-   `.agents/scripts/hooks/*`.
+   `.agents/hooks/*`.
 
 9. Parent tooling sync replaces or merges only explicitly listed managed paths and refuses symlinked
    managed paths.

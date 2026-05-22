@@ -6,6 +6,7 @@ import {
   protocolContext,
   runStep,
   runReadOnlyStopSteps,
+  stopChangedFilesFromEnv,
   stopValidationFiles,
   stopValidationSteps,
   UnclassifiedStopStepError,
@@ -61,6 +62,28 @@ test("stop validation includes generated dependency Pkl files", () => {
     "config/generated-dependencies/baseline.pkl",
     "src/core/generated-project-contract.ts",
   ]);
+});
+
+test("stop validation accepts explicit hook changed files from the environment", () => {
+  expect(
+    stopChangedFilesFromEnv({
+      KITSMITH_STOP_CHANGED_FILES_JSON: JSON.stringify([
+        "src/index.ts",
+        "src/index.ts",
+        "scripts/validation/run.ts",
+      ]),
+    }),
+  ).toEqual(["scripts/validation/run.ts", "src/index.ts"]);
+});
+
+test("stop validation falls back to Git-discovered files outside hook mode", () => {
+  expect(stopChangedFilesFromEnv({})).toBeNull();
+});
+
+test("stop validation rejects malformed hook changed file payloads", () => {
+  expect(() =>
+    stopChangedFilesFromEnv({ KITSMITH_STOP_CHANGED_FILES_JSON: JSON.stringify(["src/a.ts", 1]) }),
+  ).toThrow("KITSMITH_STOP_CHANGED_FILES_JSON must be a JSON string array.");
 });
 
 test("stop validation refuses steps not explicitly classified read-only", () => {

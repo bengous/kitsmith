@@ -155,6 +155,22 @@ async function hasAgentSync(projectRoot: string): Promise<boolean> {
   return Bun.file(`${projectRoot}/scripts/agents/sync-agents-md.ts`).exists();
 }
 
+export function stopChangedFilesFromEnv(
+  env: Readonly<Record<string, string | undefined>>,
+): readonly string[] | null {
+  const raw = env["KITSMITH_STOP_CHANGED_FILES_JSON"];
+  if (raw === undefined) {
+    return null;
+  }
+
+  const parsed = JSON.parse(raw) as unknown;
+  if (!Array.isArray(parsed) || !parsed.every((value) => typeof value === "string")) {
+    throw new Error("KITSMITH_STOP_CHANGED_FILES_JSON must be a JSON string array.");
+  }
+
+  return [...new Set(parsed)].toSorted();
+}
+
 export function protocolContext(
   projectRoot: string,
   env: Readonly<Record<string, string | undefined>> = process.env,
@@ -211,7 +227,7 @@ function tail(text: string, lines: number): string | undefined {
 
 async function main(): Promise<void> {
   const projectRoot = resolveProjectRoot(import.meta.dir);
-  const files = await getChangedFiles("working");
+  const files = stopChangedFilesFromEnv(process.env) ?? (await getChangedFiles("working"));
   const codeFiles = stopValidationFiles(files);
 
   if (codeFiles.length === 0) {

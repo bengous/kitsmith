@@ -535,51 +535,56 @@ async function assertGeneratedAiStopHookContract(root: string): Promise<void> {
   await runGeneratedProjectScript(
     root,
     `
-      import { writeFile } from "node:fs/promises";
-      import path from "node:path";
-      import { defaultRunCommand } from "./.agents/hooks/core/command-runner.ts";
       import { runStopValidation } from "./.agents/hooks/core/stop-validation.ts";
+      import { readTouchedPaths, recordTouchedPaths } from "./.agents/hooks/core/touched-paths.ts";
 
-      async function git(args) {
-        const result = await defaultRunCommand(["git", ...args], { cwd: process.cwd() });
-        if (result.code !== 0) throw new Error(result.stderr || result.stdout);
-      }
+      const sessionA = { agent: "codex", hook: "stop", cwd: process.cwd(), sessionId: "contract-a", touchedPathCandidates: [] };
+      const sessionB = { agent: "codex", hook: "stop", cwd: process.cwd(), sessionId: "contract-b", touchedPathCandidates: [] };
 
-      await git(["init"]);
-      await git(["config", "user.email", "test@example.com"]);
-      await git(["config", "user.name", "Test User"]);
-      await git(["add", "."]);
-      await git(["commit", "-m", "Initial"]);
+      await recordTouchedPaths(sessionA, ["AGENTS.md"]);
+      await recordTouchedPaths(sessionB, ["src/index.ts"]);
 
-      const result = await runStopValidation(
-        { agent: "codex", hook: "stop", cwd: process.cwd(), sessionId: "contract", touchedPathCandidates: [] },
-        async (command, options) => {
-          if (command[0] === "git") return defaultRunCommand(command, options);
-          await writeFile(path.join(process.cwd(), "generated-stop-mutation.txt"), "mutated by stop validation\\n");
+      let validationFiles = null;
+      const resultB = await runStopValidation(
+        sessionB,
+        async (_command, options) => {
+          validationFiles = JSON.parse(options.env?.["KITSMITH_STOP_CHANGED_FILES_JSON"] ?? "null");
           return { code: 0, stdout: "", stderr: "" };
         },
       );
-      if (!result.blockReason?.includes("Stop validation read-only violation")) {
-        throw new Error("Expected generated Stop hook to block read-only violation, got " + result.blockReason);
+      if (resultB.blockReason !== undefined) {
+        throw new Error("Expected session B Stop hook to pass, got " + resultB.blockReason);
       }
-      if (!result.blockReason.includes("generated-stop-mutation.txt")) {
-        throw new Error("Expected read-only violation to list changed path, got " + result.blockReason);
+      if (JSON.stringify(validationFiles) !== JSON.stringify(["src/index.ts"])) {
+        throw new Error("Expected session B Stop hook to validate only its paths, got " + JSON.stringify(validationFiles));
+      }
+      if (JSON.stringify(await readTouchedPaths(sessionA)) !== JSON.stringify(["AGENTS.md"])) {
+        throw new Error("Expected session A touched paths to survive session B Stop");
+      }
+
+      const resultA = await runStopValidation(sessionA, async () => {
+        throw new Error("validation should not run after generated path block");
+      });
+      if (!resultA.blockReason?.includes("Generated files must not be edited directly: AGENTS.md")) {
+        throw new Error("Expected session A Stop hook to block generated path, got " + resultA.blockReason);
       }
     `,
-    "generated AI Stop read-only contract",
+    "generated AI Stop session-scoped contract",
   );
 
   await runGeneratedProjectScript(
     root,
     `
-      import { defaultRunCommand } from "./.agents/hooks/core/command-runner.ts";
       import { runStopValidation } from "./.agents/hooks/core/stop-validation.ts";
+      import { recordTouchedPaths } from "./.agents/hooks/core/touched-paths.ts";
 
       const noisyOutput = Array.from({ length: 200 }, (_, index) => "wrote file-" + index).join("\\n");
+      const event = { agent: "codex", hook: "stop", cwd: process.cwd(), sessionId: "contract", touchedPathCandidates: [] };
+      await recordTouchedPaths(event, ["src/index.ts"]);
+
       const result = await runStopValidation(
-        { agent: "codex", hook: "stop", cwd: process.cwd(), sessionId: "contract", touchedPathCandidates: [] },
-        async (command, options) => {
-          if (command[0] === "git") return defaultRunCommand(command, options);
+        event,
+        async (_command, options) => {
           return {
             code: 2,
             stdout: JSON.stringify({

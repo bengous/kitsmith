@@ -1,10 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
+  TOUCHED_STATE_TTL_MS,
+  clearTouchedPaths,
   extractApplyPatchPaths,
   extractTouchedPaths,
+  pendingTouchedStatePath,
+  pruneStaleTouchedState,
   readTouchedPaths,
   recordTouchedPaths,
 } from "./touched-paths.ts";
@@ -77,6 +81,63 @@ describe("hook touched paths", () => {
           touchedPathCandidates: [],
         }),
       ).toEqual(["src/index.ts"]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("keeps touched path state isolated by session id", async () => {
+    const root = await makeTestRoot();
+    const event = {
+      agent: "codex" as const,
+      hook: "post-edit" as const,
+      cwd: root,
+      touchedPathCandidates: [],
+    };
+    try {
+      await recordTouchedPaths({ ...event, sessionId: "session-a" }, ["AGENTS.md"]);
+      await recordTouchedPaths({ ...event, sessionId: "session-b" }, ["src/index.ts"]);
+
+      expect(await readTouchedPaths({ ...event, sessionId: "session-a" })).toEqual(["AGENTS.md"]);
+      expect(await readTouchedPaths({ ...event, sessionId: "session-b" })).toEqual([
+        "src/index.ts",
+      ]);
+
+      await clearTouchedPaths({ ...event, sessionId: "session-b" });
+
+      expect(await readTouchedPaths({ ...event, sessionId: "session-a" })).toEqual(["AGENTS.md"]);
+      expect(await readTouchedPaths({ ...event, sessionId: "session-b" })).toEqual([]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("prunes stale state files without deleting the current session", async () => {
+    const root = await makeTestRoot();
+    const event = {
+      agent: "codex" as const,
+      hook: "post-edit" as const,
+      cwd: root,
+      touchedPathCandidates: [],
+    };
+    const oldSession = { ...event, sessionId: "old-session" };
+    const currentSession = { ...event, sessionId: "current-session" };
+    try {
+      await recordTouchedPaths(oldSession, ["AGENTS.md"]);
+      await recordTouchedPaths(currentSession, ["src/index.ts"]);
+
+      const now = Date.now();
+      const staleDate = new Date(now - TOUCHED_STATE_TTL_MS - 1_000);
+      const oldPath = pendingTouchedStatePath(oldSession);
+      const currentPath = pendingTouchedStatePath(currentSession);
+      await utimes(oldPath, staleDate, staleDate);
+      await utimes(currentPath, staleDate, staleDate);
+
+      await pruneStaleTouchedState(currentSession, now);
+
+      expect(await Bun.file(oldPath).exists()).toBe(false);
+      expect(await Bun.file(currentPath).exists()).toBe(true);
+      expect(await readTouchedPaths(currentSession)).toEqual(["src/index.ts"]);
     } finally {
       await rm(root, { recursive: true, force: true });
     }

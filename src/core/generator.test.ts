@@ -176,6 +176,7 @@ describe("describeGeneratedProject", () => {
     expect(specsByName["base"]).not.toContain("scripts/validation/shared/quality-workspace.ts");
     expect(specsByName["base"]).not.toContain("scripts/validation/routing-policy.ts");
     expect(specsByName["ai"]).toContain(".agents/hooks/core/contract.ts");
+    expect(specsByName["ai"]).toContain(".agents/hooks/core/session.ts");
     expect(specsByName["ai"]).toContain(".agents/hooks/adapters/pi.example.ts");
     expect(specsByName["ai"]).toContain(".claude/rules/validation-tooling.md");
     expect(specsByName["ai"]).toContain("scripts/validation/shared/quality-workspace.ts");

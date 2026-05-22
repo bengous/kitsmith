@@ -1,9 +1,9 @@
-import type { CommandResult } from "./contract.ts";
+import type { CommandResult, CommandRunnerOptions } from "./contract.ts";
 import { describe, expect, test } from "bun:test";
-import { chmod, mkdir, mkdtemp, rm, symlink, unlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { defaultRunCommand } from "./command-runner.ts";
+import { MissingSessionIdError } from "./session.ts";
 import { runStopValidation } from "./stop-validation.ts";
 import { readTouchedPaths, recordTouchedPaths } from "./touched-paths.ts";
 
@@ -23,49 +23,33 @@ async function seedFile(root: string, relPath: string, content: string): Promise
   await writeFile(absolute, content);
 }
 
-async function makeGitRoot(): Promise<string> {
-  const root = await makeTestRoot();
-  await runGit(root, ["init"]);
-  await runGit(root, ["config", "user.email", "test@example.com"]);
-  await runGit(root, ["config", "user.name", "Test User"]);
-  await runGit(root, ["config", "core.filemode", "true"]);
-  await runGit(root, ["add", "."]);
-  await runGit(root, ["commit", "-m", "Initial"]);
-  return root;
-}
-
-async function runGit(root: string, args: readonly string[]): Promise<void> {
-  const result = await defaultRunCommand(["git", ...args], { cwd: root });
-  if (result.code !== 0) {
-    throw new Error(`git ${args.join(" ")} failed: ${result.stderr || result.stdout}`);
-  }
-}
-
-function eventFor(root: string) {
+function eventFor(root: string, sessionId = "session") {
   return {
     agent: "codex" as const,
     hook: "stop" as const,
     cwd: root,
-    sessionId: "session",
+    sessionId,
     touchedPathCandidates: [],
   };
 }
 
-function mutatingRunner(mutate: () => Promise<void>) {
-  return async (
-    command: readonly string[],
-    options: { readonly cwd: string; readonly env?: Readonly<Record<string, string | undefined>> },
-  ): Promise<CommandResult> => {
-    if (command[0] === "git") {
-      return defaultRunCommand(command, options);
-    }
-    await mutate();
-    return { code: 0, stdout: "", stderr: "" };
-  };
+async function recordDefaultTouchedPath(event: ReturnType<typeof eventFor>): Promise<void> {
+  await recordTouchedPaths(event, ["src/index.ts"]);
+}
+
+function failureRecord(options: CommandRunnerOptions, overrides: Record<string, unknown>): string {
+  return `${JSON.stringify({
+    protocol: "kitsmith.stop-validation",
+    version: 1,
+    type: "failure",
+    runId: options.env?.["KITSMITH_STOP_RUN_ID"],
+    failureKind: "validation_failed",
+    ...overrides,
+  })}\n`;
 }
 
 describe("stop validation", () => {
-  test("skips recursive stop hooks", async () => {
+  test("skips recursive stop hooks before requiring a session id", async () => {
     const calls: string[] = [];
     const result = await runStopValidation(
       { agent: "codex", hook: "stop", stopHookActive: true, touchedPathCandidates: [] },
@@ -79,48 +63,84 @@ describe("stop validation", () => {
     expect(calls).toEqual([]);
   });
 
-  test("clears pending state on success and preserves it on failure", async () => {
-    const root = await makeGitRoot();
-    const event = {
-      agent: "claude" as const,
-      hook: "stop" as const,
-      cwd: root,
-      sessionId: "session",
-      touchedPathCandidates: [],
-    };
+  test("requires session-scoped hook payloads", async () => {
+    const root = await makeTestRoot();
     try {
-      await recordTouchedPaths(event, ["src/index.ts"]);
-      await runStopValidation(event, async (command, options) => {
-        if (command[0] === "git") {
-          return defaultRunCommand(command, options);
-        }
-        return { code: 0, stdout: "", stderr: "" };
-      });
-      expect(await readTouchedPaths(event)).toEqual([]);
+      let thrown: unknown;
+      try {
+        await runStopValidation({
+          agent: "codex",
+          hook: "stop",
+          cwd: root,
+          touchedPathCandidates: [],
+        });
+      } catch (error) {
+        thrown = error;
+      }
 
-      await recordTouchedPaths(event, ["src/index.ts"]);
-      await runStopValidation(event, async (command, options) => {
-        if (command[0] === "git") {
-          return defaultRunCommand(command, options);
-        }
-        return { code: 1, stdout: "failed\n", stderr: "" };
-      });
-      expect(await readTouchedPaths(event)).toEqual(["src/index.ts"]);
+      expect(thrown).toBeInstanceOf(MissingSessionIdError);
     } finally {
       await rm(root, { recursive: true, force: true });
     }
   });
 
-  test("blocks generated pending paths before running validation", async () => {
+  test("skips validation when the current session has no touched paths", async () => {
     const root = await makeTestRoot();
     const calls: string[] = [];
-    const event = {
-      agent: "codex" as const,
-      hook: "stop" as const,
-      cwd: root,
-      sessionId: "session",
-      touchedPathCandidates: [],
-    };
+    try {
+      const result = await runStopValidation(
+        eventFor(root),
+        async (command): Promise<CommandResult> => {
+          calls.push(command.join(" "));
+          return { code: 0, stdout: "", stderr: "" };
+        },
+      );
+
+      expect(result.blockReason).toBeUndefined();
+      expect(calls).toEqual([]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("passes only the current session touched paths to validation", async () => {
+    const root = await makeTestRoot();
+    const sessionA = eventFor(root, "session-a");
+    const sessionB = eventFor(root, "session-b");
+    const validationEnvs: Array<Readonly<Record<string, string | undefined>>> = [];
+    try {
+      await seedFile(
+        root,
+        ".agents/agents-md-manifest.json",
+        JSON.stringify({ generated: ["AGENTS.md"], outputs: {} }),
+      );
+      await recordTouchedPaths(sessionA, ["AGENTS.md"]);
+      await recordTouchedPaths(sessionB, ["src/index.ts"]);
+
+      const result = await runStopValidation(sessionB, async (_command, options) => {
+        validationEnvs.push(options.env ?? {});
+        return { code: 0, stdout: "", stderr: "" };
+      });
+
+      expect(result.blockReason).toBeUndefined();
+      expect(validationEnvs).toHaveLength(1);
+      expect(validationEnvs[0]?.["KITSMITH_STOP_SESSION_ID"]).toBe("session-b");
+      expect(validationEnvs[0]?.["KITSMITH_STOP_RUN_ID"]).toBeString();
+      expect(validationEnvs[0]?.["KITSMITH_STOP_RUN_ID"]).not.toBe("session-b");
+      expect(validationEnvs[0]?.["KITSMITH_STOP_CHANGED_FILES_JSON"]).toBe(
+        JSON.stringify(["src/index.ts"]),
+      );
+      expect(await readTouchedPaths(sessionA)).toEqual(["AGENTS.md"]);
+      expect(await readTouchedPaths(sessionB)).toEqual([]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("blocks generated pending paths for the current session before running validation", async () => {
+    const root = await makeTestRoot();
+    const calls: string[] = [];
+    const event = eventFor(root);
     try {
       await seedFile(
         root,
@@ -144,28 +164,37 @@ describe("stop validation", () => {
     }
   });
 
-  test("blocks non-JSONL validation failure output as an invalid protocol", async () => {
-    const root = await makeGitRoot();
+  test("clears pending state on success and preserves it on failure", async () => {
+    const root = await makeTestRoot();
+    const event = eventFor(root);
     try {
-      const result = await runStopValidation(
-        {
-          agent: "claude",
-          hook: "stop",
-          cwd: root,
-          sessionId: "session",
-          touchedPathCandidates: [],
-        },
-        async (command, options) => {
-          if (command[0] === "git") {
-            return defaultRunCommand(command, options);
-          }
-          return {
-            code: 2,
-            stdout: "Validation failed:\n[typecheck:frontend] src/routes/index.tsx failed\n",
-            stderr: "lint failed\n",
-          };
-        },
-      );
+      await recordDefaultTouchedPath(event);
+      await runStopValidation(event, async () => ({ code: 0, stdout: "", stderr: "" }));
+      expect(await readTouchedPaths(event)).toEqual([]);
+
+      await recordDefaultTouchedPath(event);
+      await runStopValidation(event, async () => ({
+        code: 1,
+        stdout: "failed\n",
+        stderr: "",
+      }));
+      expect(await readTouchedPaths(event)).toEqual(["src/index.ts"]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("blocks non-JSONL validation failure output as an invalid protocol", async () => {
+    const root = await makeTestRoot();
+    const event = eventFor(root);
+    try {
+      await recordDefaultTouchedPath(event);
+
+      const result = await runStopValidation(event, async () => ({
+        code: 2,
+        stdout: "Validation failed:\n[typecheck:frontend] src/routes/index.tsx failed\n",
+        stderr: "lint failed\n",
+      }));
 
       expect(result.blockReason).toContain("invalid validation protocol");
       expect(result.blockReason).toContain("[typecheck:frontend] src/routes/index.tsx failed");
@@ -175,239 +204,25 @@ describe("stop validation", () => {
     }
   });
 
-  test("blocks validation that mutates a file already dirty before Stop", async () => {
-    const root = await makeGitRoot();
-    try {
-      await seedFile(root, "src/index.ts", "export const main = 'dirty before';\n");
-
-      const result = await runStopValidation(
-        eventFor(root),
-        mutatingRunner(async () => {
-          await seedFile(root, "src/index.ts", "export const main = 'dirty after';\n");
-        }),
-      );
-
-      expect(result.blockReason).toContain("Stop validation read-only violation");
-      expect(result.blockReason).toContain("src/index.ts");
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  });
-
-  test("blocks validation that creates an untracked file", async () => {
-    const root = await makeGitRoot();
-    try {
-      const result = await runStopValidation(
-        eventFor(root),
-        mutatingRunner(async () => {
-          await seedFile(root, "src/new-file.ts", "export const created = true;\n");
-        }),
-      );
-
-      expect(result.blockReason).toContain("Stop validation read-only violation");
-      expect(result.blockReason).toContain("src/new-file.ts");
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  });
-
-  test("blocks validation that deletes a tracked file", async () => {
-    const root = await makeGitRoot();
-    try {
-      const result = await runStopValidation(
-        eventFor(root),
-        mutatingRunner(async () => {
-          await unlink(path.join(root, "src/index.ts"));
-        }),
-      );
-
-      expect(result.blockReason).toContain("Stop validation read-only violation");
-      expect(result.blockReason).toContain("src/index.ts");
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  });
-
-  test("blocks validation that mutates staged index state", async () => {
-    const root = await makeGitRoot();
-    try {
-      const result = await runStopValidation(
-        eventFor(root),
-        mutatingRunner(async () => {
-          await seedFile(root, "src/index.ts", "export const main = 'staged';\n");
-          await runGit(root, ["add", "src/index.ts"]);
-        }),
-      );
-
-      expect(result.blockReason).toContain("Stop validation read-only violation");
-      expect(result.blockReason).toContain("src/index.ts");
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  });
-
-  test("blocks validation when Git reports a tracked file mode change", async () => {
-    const root = await makeTestRoot();
-    let validationRan = false;
-    try {
-      const result = await runStopValidation(
-        eventFor(root),
-        async (command): Promise<CommandResult> => {
-          if (command[0] !== "git") {
-            validationRan = true;
-            return { code: 0, stdout: "", stderr: "" };
-          }
-
-          if (command.includes("rev-parse")) {
-            return { code: 0, stdout: "true\n", stderr: "" };
-          }
-          if (command.includes("status")) {
-            return { code: 0, stdout: validationRan ? " M src/index.ts\0" : "", stderr: "" };
-          }
-          if (command.includes("diff") && !command.includes("--cached")) {
-            return {
-              code: 0,
-              stdout: validationRan
-                ? "diff --git a/src/index.ts b/src/index.ts\nold mode 100644\nnew mode 100755\n"
-                : "",
-              stderr: "",
-            };
-          }
-
-          return { code: 0, stdout: "", stderr: "" };
-        },
-      );
-
-      expect(result.blockReason).toContain("Stop validation read-only violation");
-      expect(result.blockReason).toContain("src/index.ts");
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  });
-
-  test.skipIf(process.platform === "win32")(
-    "blocks validation that changes a tracked POSIX file mode",
-    async () => {
-      const root = await makeGitRoot();
-      try {
-        const result = await runStopValidation(
-          eventFor(root),
-          mutatingRunner(async () => {
-            await chmod(path.join(root, "src/index.ts"), 0o755);
-          }),
-        );
-
-        expect(result.blockReason).toContain("Stop validation read-only violation");
-        expect(result.blockReason).toContain("src/index.ts");
-      } finally {
-        await rm(root, { recursive: true, force: true });
-      }
-    },
-  );
-
-  test("passes a generated run id to validation without replacing it with session id", async () => {
-    const root = await makeGitRoot();
-    const validationEnvs: Array<Readonly<Record<string, string | undefined>>> = [];
-    try {
-      const result = await runStopValidation(
-        {
-          agent: "codex",
-          hook: "stop",
-          cwd: root,
-          sessionId: "session-readable",
-          touchedPathCandidates: [],
-        },
-        async (command, options): Promise<CommandResult> => {
-          if (command[0] === "git") {
-            return defaultRunCommand(command, options);
-          }
-          validationEnvs.push(options.env ?? {});
-          return { code: 0, stdout: "", stderr: "" };
-        },
-      );
-
-      expect(result.blockReason).toBeUndefined();
-      expect(validationEnvs).toHaveLength(1);
-      expect(validationEnvs[0]?.["KITSMITH_STOP_SESSION_ID"]).toBe("session-readable");
-      expect(validationEnvs[0]?.["KITSMITH_STOP_RUN_ID"]).toBeString();
-      expect(validationEnvs[0]?.["KITSMITH_STOP_RUN_ID"]).not.toBe("session-readable");
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  });
-
-  test("blocks when read-only proof is unavailable after validation runs", async () => {
-    const root = await makeGitRoot();
-    let validationRan = false;
-    try {
-      const result = await runStopValidation(
-        eventFor(root),
-        async (command, options): Promise<CommandResult> => {
-          if (command[0] !== "git") {
-            validationRan = true;
-            return { code: 0, stdout: "", stderr: "" };
-          }
-          if (validationRan && command.includes("status")) {
-            return { code: 128, stdout: "", stderr: "fatal: index unavailable\n" };
-          }
-          return defaultRunCommand(command, options);
-        },
-      );
-
-      expect(result.blockReason).toContain("Stop validation read-only proof unavailable");
-      expect(result.blockReason).toContain("Git status or diff fingerprint command failed");
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  });
-
-  test("fingerprints untracked symlinks without reading their targets", async () => {
-    const root = await makeGitRoot();
-    const outside = path.join(root, "..", "outside-secret.txt");
-    try {
-      await writeFile(outside, "before\n");
-      await symlink(outside, path.join(root, "secret-link"));
-
-      const result = await runStopValidation(
-        eventFor(root),
-        mutatingRunner(async () => {
-          await writeFile(outside, "after\n");
-        }),
-      );
-
-      expect(result.blockReason).toBeUndefined();
-    } finally {
-      await rm(root, { recursive: true, force: true });
-      await rm(outside, { force: true });
-    }
-  });
-
   test("uses JSONL validation failure records instead of raw command output", async () => {
-    const root = await makeGitRoot();
+    const root = await makeTestRoot();
+    const event = eventFor(root);
     const stdoutRef = `${root}/.agents/tmp/hooks/stop/session/run/typecheck-stdout.txt`;
     const noisyOutput = Array.from({ length: 200 }, (_, index) => `wrote file-${index}`).join("\n");
     try {
-      const result = await runStopValidation(eventFor(root), async (command, options) => {
-        if (command[0] === "git") {
-          return defaultRunCommand(command, options);
-        }
-        return {
-          code: 2,
-          stdout: `${JSON.stringify({
-            protocol: "kitsmith.stop-validation",
-            version: 1,
-            type: "failure",
-            runId: options.env?.["KITSMITH_STOP_RUN_ID"],
-            failureKind: "validation_failed",
-            step: "typecheck",
-            exitCode: 2,
-            stdoutTail: noisyOutput,
-            stdoutRef,
-            actionHint: "Run `bun run typecheck` outside the Stop hook and fix the failure.",
-          })}\n`,
-          stderr: "",
-        };
-      });
+      await recordDefaultTouchedPath(event);
+
+      const result = await runStopValidation(event, async (_command, options) => ({
+        code: 2,
+        stdout: failureRecord(options, {
+          step: "typecheck",
+          exitCode: 2,
+          stdoutTail: noisyOutput,
+          stdoutRef,
+          actionHint: "Run `bun run typecheck` outside the Stop hook and fix the failure.",
+        }),
+        stderr: "",
+      }));
 
       expect(result.blockReason).toContain("Stop validation failed in typecheck");
       expect(result.blockReason).toContain(`stdout: ${stdoutRef}`);
@@ -419,14 +234,13 @@ describe("stop validation", () => {
   });
 
   test("keeps ignored protocol artifacts from masking validation failures", async () => {
-    const root = await makeGitRoot();
+    const root = await makeTestRoot();
+    const event = eventFor(root);
     let stdoutRef = "";
     try {
-      const result = await runStopValidation(eventFor(root), async (command, options) => {
-        if (command[0] === "git") {
-          return defaultRunCommand(command, options);
-        }
+      await recordDefaultTouchedPath(event);
 
+      const result = await runStopValidation(event, async (_command, options) => {
         const runId = options.env?.["KITSMITH_STOP_RUN_ID"] ?? "missing-run-id";
         stdoutRef = path.join(
           ".agents",
@@ -440,17 +254,13 @@ describe("stop validation", () => {
         await seedFile(root, stdoutRef, "full validation output\n");
         return {
           code: 2,
-          stdout: `${JSON.stringify({
-            protocol: "kitsmith.stop-validation",
-            version: 1,
-            type: "failure",
+          stdout: failureRecord(options, {
             runId,
-            failureKind: "validation_failed",
             step: "typecheck",
             exitCode: 2,
             stdoutRef,
             actionHint: "Run `bun run typecheck` outside the Stop hook and fix the failure.",
-          })}\n`,
+          }),
           stderr: "",
         };
       });
@@ -464,24 +274,18 @@ describe("stop validation", () => {
   });
 
   test("rejects validation records with a mismatched run id", async () => {
-    const root = await makeGitRoot();
+    const root = await makeTestRoot();
+    const event = eventFor(root);
     try {
-      const result = await runStopValidation(eventFor(root), async (command, options) => {
-        if (command[0] === "git") {
-          return defaultRunCommand(command, options);
-        }
-        return {
-          code: 2,
-          stdout: `${JSON.stringify({
-            protocol: "kitsmith.stop-validation",
-            version: 1,
-            type: "failure",
-            runId: "not-the-generated-run-id",
-            failureKind: "validation_failed",
-          })}\n`,
-          stderr: "",
-        };
-      });
+      await recordDefaultTouchedPath(event);
+
+      const result = await runStopValidation(event, async (_command, options) => ({
+        code: 2,
+        stdout: failureRecord(options, {
+          runId: "not-the-generated-run-id",
+        }),
+        stderr: "",
+      }));
 
       expect(result.blockReason).toContain("invalid validation protocol");
       expect(result.blockReason).toContain("runId was missing or mismatched");
@@ -491,23 +295,21 @@ describe("stop validation", () => {
   });
 
   test("rejects unknown validation protocol records", async () => {
-    const root = await makeGitRoot();
+    const root = await makeTestRoot();
+    const event = eventFor(root);
     try {
-      const result = await runStopValidation(eventFor(root), async (command, options) => {
-        if (command[0] === "git") {
-          return defaultRunCommand(command, options);
-        }
-        return {
-          code: 2,
-          stdout: `${JSON.stringify({
-            protocol: "kitsmith.stop-validation",
-            version: 1,
-            type: "progress",
-            runId: options.env?.["KITSMITH_STOP_RUN_ID"],
-          })}\n`,
-          stderr: "",
-        };
-      });
+      await recordDefaultTouchedPath(event);
+
+      const result = await runStopValidation(event, async (_command, options) => ({
+        code: 2,
+        stdout: `${JSON.stringify({
+          protocol: "kitsmith.stop-validation",
+          version: 1,
+          type: "progress",
+          runId: options.env?.["KITSMITH_STOP_RUN_ID"],
+        })}\n`,
+        stderr: "",
+      }));
 
       expect(result.blockReason).toContain("invalid validation protocol");
       expect(result.blockReason).toContain("unknown protocol record");
@@ -517,27 +319,21 @@ describe("stop validation", () => {
   });
 
   test("turns unclassified step records into refusal feedback", async () => {
-    const root = await makeGitRoot();
+    const root = await makeTestRoot();
+    const event = eventFor(root);
     try {
-      const result = await runStopValidation(eventFor(root), async (command, options) => {
-        if (command[0] === "git") {
-          return defaultRunCommand(command, options);
-        }
-        return {
-          code: 3,
-          stdout: `${JSON.stringify({
-            protocol: "kitsmith.stop-validation",
-            version: 1,
-            type: "failure",
-            runId: options.env?.["KITSMITH_STOP_RUN_ID"],
-            failureKind: "unclassified_stop_step",
-            step: "agents:sync",
-            exitCode: 3,
-            actionHint: "Classify the Stop validation step as read-only or remove it from Stop.",
-          })}\n`,
-          stderr: "",
-        };
-      });
+      await recordDefaultTouchedPath(event);
+
+      const result = await runStopValidation(event, async (_command, options) => ({
+        code: 3,
+        stdout: failureRecord(options, {
+          failureKind: "unclassified_stop_step",
+          step: "agents:sync",
+          exitCode: 3,
+          actionHint: "Classify the Stop validation step as read-only or remove it from Stop.",
+        }),
+        stderr: "",
+      }));
 
       expect(result.blockReason).toContain(
         "Stop validation refused unclassified step: agents:sync",
@@ -551,18 +347,16 @@ describe("stop validation", () => {
   });
 
   test("blocks invalid validation protocol with a bounded raw excerpt", async () => {
-    const root = await makeGitRoot();
+    const root = await makeTestRoot();
+    const event = eventFor(root);
     try {
-      const result = await runStopValidation(eventFor(root), async (command, options) => {
-        if (command[0] === "git") {
-          return defaultRunCommand(command, options);
-        }
-        return {
-          code: 2,
-          stdout: Array.from({ length: 80 }, (_, index) => `raw line ${index}`).join("\n"),
-          stderr: "",
-        };
-      });
+      await recordDefaultTouchedPath(event);
+
+      const result = await runStopValidation(event, async () => ({
+        code: 2,
+        stdout: Array.from({ length: 80 }, (_, index) => `raw line ${index}`).join("\n"),
+        stderr: "",
+      }));
 
       expect(result.blockReason).toContain("invalid validation protocol");
       expect(result.blockReason).toContain("Raw output excerpt:");

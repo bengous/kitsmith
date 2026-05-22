@@ -11,6 +11,17 @@
             "statusMessage": "Checking for destructive commands..."
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && bun scripts/validation/guard-parent-tooling-target-edits.ts",
+            "timeout": 10,
+            "statusMessage": "Checking parent tooling managed targets..."
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -40,6 +51,8 @@
     ]
   },
   "worktree": {
-    "symlinkDirectories": ["node_modules"]
+    "symlinkDirectories": [
+      "node_modules"
+    ]
   }
 }

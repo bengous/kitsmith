@@ -5,12 +5,19 @@ import { dirname, join } from "node:path";
 
 type ParentToolingSyncMode = "replace-file" | "replace-tree" | "merge-lines";
 
+export type ParentToolingPreserveBlock = {
+  readonly start: string;
+  readonly end: string;
+};
+
 export type ParentToolingSyncRule = {
   readonly name: string;
   readonly mode: ParentToolingSyncMode;
   readonly source: string;
   readonly target: string;
   readonly preserveExtra?: readonly string[];
+  readonly preserveBlocks?: readonly ParentToolingPreserveBlock[];
+  readonly jsonOverlays?: readonly string[];
 };
 
 export type ParentToolingChange =
@@ -57,12 +64,19 @@ export const PARENT_TOOLING_SYNC_RULES = [
     mode: "replace-file",
     source: "template-sources/ai/.codex/config.toml",
     target: ".codex/config.toml",
+    preserveBlocks: [
+      {
+        start: "# BEGIN KITSMITH INTERNAL HOOKS",
+        end: "# END KITSMITH INTERNAL HOOKS",
+      },
+    ],
   },
   {
     name: "Claude hook config",
     mode: "replace-file",
     source: "template-sources/ai/.claude/settings.json",
     target: ".claude/settings.json",
+    jsonOverlays: ["scripts/sync/parent-tooling/claude-settings.overlay.json"],
   },
   {
     name: "shared hook runtime Claude rule",
@@ -158,11 +172,26 @@ function isPreservedTargetExtra(filePath: string, rule: ParentToolingSyncRule): 
   return (rule.preserveExtra ?? []).includes(relativeTargetPath);
 }
 
+function hasParentLocalPreservation(rule: ParentToolingSyncRule): boolean {
+  return (rule.preserveBlocks?.length ?? 0) > 0;
+}
+
+function matchesRuleSourcePath(filePath: string, rule: ParentToolingSyncRule): boolean {
+  return (
+    matchesRulePath(filePath, rule.source, rule.mode) ||
+    (rule.jsonOverlays ?? []).some((source) => matchesRulePath(filePath, source, "replace-file"))
+  );
+}
+
+function ruleSourceLabel(rule: ParentToolingSyncRule): string {
+  return [rule.source, ...(rule.jsonOverlays ?? [])].join(", ");
+}
+
 export function isParentToolingSyncSourcePath(
   filePath: string,
   rules: readonly ParentToolingSyncRule[] = PARENT_TOOLING_SYNC_RULES,
 ): boolean {
-  return rules.some((rule) => matchesRulePath(filePath, rule.source, rule.mode));
+  return rules.some((rule) => matchesRuleSourcePath(filePath, rule));
 }
 
 export function isParentToolingSyncTargetPath(
@@ -173,6 +202,43 @@ export function isParentToolingSyncTargetPath(
     (rule) =>
       matchesRulePath(filePath, rule.target, rule.mode) && !isPreservedTargetExtra(filePath, rule),
   );
+}
+
+export function isParentToolingDirectEditBlockedTargetPath(
+  filePath: string,
+  rules: readonly ParentToolingSyncRule[] = PARENT_TOOLING_SYNC_RULES,
+): boolean {
+  return rules.some(
+    (rule) =>
+      rule.mode !== "merge-lines" &&
+      !hasParentLocalPreservation(rule) &&
+      matchesRulePath(filePath, rule.target, rule.mode) &&
+      !isPreservedTargetExtra(filePath, rule),
+  );
+}
+
+export function parentToolingSourceForTargetPath(
+  filePath: string,
+  rules: readonly ParentToolingSyncRule[] = PARENT_TOOLING_SYNC_RULES,
+): string | null {
+  const normalizedFile = normalizeRelativePath(filePath);
+
+  for (const rule of rules) {
+    if (
+      !matchesRulePath(filePath, rule.target, rule.mode) ||
+      isPreservedTargetExtra(filePath, rule)
+    ) {
+      continue;
+    }
+
+    const normalizedTarget = normalizeRelativePath(rule.target);
+    if (rule.mode === "replace-tree" && normalizedFile.startsWith(`${normalizedTarget}/`)) {
+      return toPosixPath(join(rule.source, normalizedFile.slice(normalizedTarget.length + 1)));
+    }
+    return ruleSourceLabel(rule);
+  }
+
+  return null;
 }
 
 export function isParentToolingSyncPath(
@@ -191,6 +257,132 @@ function normalizeNewlines(content: string): string {
 function ensureTrailingNewline(content: string): string {
   const normalized = normalizeNewlines(content);
   return normalized.endsWith("\n") ? normalized : `${normalized}\n`;
+}
+
+function extractPreservedBlock(content: string, block: ParentToolingPreserveBlock): string | null {
+  const lines = normalizeNewlines(content).trimEnd().split("\n");
+  const startIndexes = lines.flatMap((line, index) => (line === block.start ? [index] : []));
+  const endIndexes = lines.flatMap((line, index) => (line === block.end ? [index] : []));
+
+  if (startIndexes.length === 0 && endIndexes.length === 0) {
+    return null;
+  }
+  if (startIndexes.length !== 1 || endIndexes.length !== 1) {
+    throw new Error(`${block.start}: preserved block markers must appear exactly once`);
+  }
+
+  const startIndex = startIndexes[0];
+  const endIndex = endIndexes[0];
+  if (startIndex === undefined || endIndex === undefined || endIndex <= startIndex) {
+    throw new Error(`${block.start}: preserved block end marker must appear after start marker`);
+  }
+
+  return lines.slice(startIndex, endIndex + 1).join("\n");
+}
+
+function applyPreservedBlocks(
+  managedContent: string,
+  currentContent: string | null,
+  blocks: readonly ParentToolingPreserveBlock[] = [],
+): string {
+  if (blocks.length === 0 || currentContent === null) {
+    return managedContent;
+  }
+
+  const managed = normalizeNewlines(managedContent);
+  for (const block of blocks) {
+    if (managed.includes(block.start) || managed.includes(block.end)) {
+      throw new Error(`${block.start}: preserved block markers must stay out of managed source`);
+    }
+  }
+
+  const preservedBlocks = blocks
+    .map((block) => extractPreservedBlock(currentContent, block))
+    .filter((block): block is string => block !== null);
+
+  if (preservedBlocks.length === 0) {
+    return managedContent;
+  }
+
+  return ensureTrailingNewline([managed.trimEnd(), ...preservedBlocks].join("\n\n"));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isUnknownArray(value: unknown): value is unknown[] {
+  return Array.isArray(value);
+}
+
+function parseJsonObject(content: string, filePath: string): Record<string, unknown> {
+  let value: unknown;
+  try {
+    value = JSON.parse(content);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`${filePath}: expected valid JSON object: ${message}`, {
+      cause: error,
+    });
+  }
+
+  if (!isRecord(value)) {
+    throw new Error(`${filePath}: expected a JSON object`);
+  }
+  return value;
+}
+
+function mergeJsonValues(base: unknown, overlay: unknown): unknown {
+  if (isUnknownArray(base) && isUnknownArray(overlay)) {
+    const seen = new Set(base.map((item) => JSON.stringify(item)));
+    const additions = overlay.filter((item) => {
+      const key = JSON.stringify(item);
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+    return base.concat(additions);
+  }
+
+  if (isRecord(base) && isRecord(overlay)) {
+    const merged: Record<string, unknown> = { ...base };
+    for (const [key, value] of Object.entries(overlay)) {
+      merged[key] = key in merged ? mergeJsonValues(merged[key], value) : value;
+    }
+    return merged;
+  }
+
+  return overlay;
+}
+
+async function applyJsonOverlays(
+  cwd: string,
+  managedContent: string,
+  rule: ParentToolingSyncRule,
+): Promise<string> {
+  if ((rule.jsonOverlays?.length ?? 0) === 0) {
+    return managedContent;
+  }
+
+  let merged: unknown = parseJsonObject(managedContent, rule.source);
+  for (const overlayPath of rule.jsonOverlays ?? []) {
+    const overlay = parseJsonObject(await readRequiredText(cwd, overlayPath), overlayPath);
+    merged = mergeJsonValues(merged, overlay);
+  }
+
+  return `${JSON.stringify(merged, null, 2)}\n`;
+}
+
+async function applyParentLocalPreservation(
+  cwd: string,
+  managedContent: string,
+  currentContent: string | null,
+  rule: ParentToolingSyncRule,
+): Promise<string> {
+  const withBlocks = applyPreservedBlocks(managedContent, currentContent, rule.preserveBlocks);
+  return applyJsonOverlays(cwd, withBlocks, rule);
 }
 
 export function mergeLineSets(current: string, additions: string): string {
@@ -317,8 +509,13 @@ async function planReplaceFile(
   cwd: string,
   rule: ParentToolingSyncRule,
 ): Promise<ParentToolingChange[]> {
-  const expected = await readRequiredText(cwd, rule.source);
   const actual = await readText(cwd, rule.target);
+  const expected = await applyParentLocalPreservation(
+    cwd,
+    await readRequiredText(cwd, rule.source),
+    actual,
+    rule,
+  );
   return actual === expected ? [] : [writeChange(rule.target, expected, rule.name)];
 }
 

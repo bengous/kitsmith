@@ -117,11 +117,11 @@ async function pruneStaleTouchedStateForSession(
 
   await Promise.all(
     entries.map(async (entry) => {
-      if (!entry.isFile() || !entry.name.endsWith(".json")) {
-        return;
-      }
-
-      if (entry.name.startsWith(currentSessionPrefix)) {
+      if (
+        !entry.isFile() ||
+        !entry.name.endsWith(".json") ||
+        entry.name.startsWith(currentSessionPrefix)
+      ) {
         return;
       }
 

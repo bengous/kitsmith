@@ -6,10 +6,12 @@ import { join } from "node:path";
 import {
   applyParentToolingSync,
   formatParentToolingDrift,
+  isParentToolingDirectEditBlockedTargetPath,
   isParentToolingSyncPath,
   isParentToolingSyncSourcePath,
   isParentToolingSyncTargetPath,
   mergeLineSets,
+  parentToolingSourceForTargetPath,
   planParentToolingSync,
 } from "./parent-tooling";
 
@@ -73,8 +75,21 @@ describe("parent tooling sync plan", () => {
     expect(isParentToolingSyncSourcePath("template-sources/ai/.codex/hooks/guard.ts")).toBe(true);
     expect(isParentToolingSyncTargetPath(".codex/hooks/guard.ts")).toBe(true);
     expect(isParentToolingSyncTargetPath(".codex/hooks/AGENTS.md")).toBe(false);
+    expect(isParentToolingDirectEditBlockedTargetPath(".agents/hooks/core/contract.ts")).toBe(true);
+    expect(isParentToolingDirectEditBlockedTargetPath(".codex/config.toml")).toBe(false);
+    expect(isParentToolingDirectEditBlockedTargetPath(".claude/settings.json")).toBe(true);
+    expect(isParentToolingDirectEditBlockedTargetPath(".gitignore")).toBe(false);
+    expect(
+      isParentToolingSyncSourcePath("scripts/sync/parent-tooling/claude-settings.overlay.json"),
+    ).toBe(true);
     expect(isParentToolingSyncPath(".gitignore")).toBe(true);
     expect(isParentToolingSyncPath("src/index.ts")).toBe(false);
+    expect(parentToolingSourceForTargetPath(".agents/hooks/core/contract.ts")).toBe(
+      "template-sources/ai/.agents/hooks/core/contract.ts",
+    );
+    expect(parentToolingSourceForTargetPath(".claude/settings.json")).toBe(
+      "template-sources/ai/.claude/settings.json, scripts/sync/parent-tooling/claude-settings.overlay.json",
+    );
   });
 
   test("replaces managed trees, preserves declared extras, and removes stale files", async () => {
@@ -127,6 +142,160 @@ describe("parent tooling sync plan", () => {
       "dist/\nnode_modules\n.DS_Store\n",
     );
     expect((await planParentToolingSync({ cwd: dir, rules })).changes).toHaveLength(0);
+  });
+
+  test("replace-file rules can preserve parent-local marked blocks", async () => {
+    const dir = makeTempDir();
+    await writeFile(dir, "source/config.toml", "managed = true\n");
+    await writeFile(
+      dir,
+      "target/config.toml",
+      ["managed = false", "", "# BEGIN LOCAL", "local = true", "# END LOCAL", ""].join("\n"),
+    );
+    const rules = [
+      {
+        name: "test config",
+        mode: "replace-file",
+        source: "source/config.toml",
+        target: "target/config.toml",
+        preserveBlocks: [{ start: "# BEGIN LOCAL", end: "# END LOCAL" }],
+      },
+    ] satisfies readonly ParentToolingSyncRule[];
+
+    const plan = await planParentToolingSync({ cwd: dir, rules });
+
+    expect(plan.changes).toEqual([
+      {
+        kind: "write",
+        path: "target/config.toml",
+        reason: "test config",
+        content: "managed = true\n\n# BEGIN LOCAL\nlocal = true\n# END LOCAL\n",
+      },
+    ]);
+    await applyParentToolingSync(plan.changes, dir);
+    expect((await planParentToolingSync({ cwd: dir, rules })).changes).toHaveLength(0);
+  });
+
+  test("replace-file rules can apply parent-local JSON overlays", async () => {
+    const dir = makeTempDir();
+    await writeFile(
+      dir,
+      "source/settings.json",
+      `${JSON.stringify(
+        {
+          hooks: {
+            PreToolUse: [
+              {
+                matcher: "Bash",
+                hooks: [{ type: "command", command: "bun guard-destructive.ts" }],
+              },
+            ],
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    await writeFile(
+      dir,
+      "overlay/settings.json",
+      `${JSON.stringify(
+        {
+          hooks: {
+            PreToolUse: [
+              {
+                matcher: "Edit|Write|MultiEdit",
+                hooks: [
+                  {
+                    type: "command",
+                    command: "bun scripts/validation/guard-parent-tooling-target-edits.ts",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    await writeFile(
+      dir,
+      "target/settings.json",
+      JSON.stringify({
+        hooks: {
+          PreToolUse: [
+            {
+              matcher: "Bash",
+              hooks: [{ type: "command", command: "bun old-guard.ts" }],
+            },
+          ],
+        },
+      }),
+    );
+    const rules = [
+      {
+        name: "test settings",
+        mode: "replace-file",
+        source: "source/settings.json",
+        target: "target/settings.json",
+        jsonOverlays: ["overlay/settings.json"],
+      },
+    ] satisfies readonly ParentToolingSyncRule[];
+
+    const plan = await planParentToolingSync({ cwd: dir, rules });
+
+    expect(plan.changes).toHaveLength(1);
+    const change = plan.changes[0];
+    if (change?.kind !== "write") {
+      throw new Error("Expected a write change");
+    }
+    expect(change.content).toContain("bun guard-destructive.ts");
+    expect(change.content).toContain("scripts/validation/guard-parent-tooling-target-edits.ts");
+    expect(change.content).not.toContain("bun old-guard.ts");
+    await applyParentToolingSync(plan.changes, dir);
+    expect((await planParentToolingSync({ cwd: dir, rules })).changes).toHaveLength(0);
+  });
+
+  test("replace-file rules reject malformed preserved blocks", async () => {
+    const dir = makeTempDir();
+    await writeFile(dir, "source/config.toml", "managed = true\n");
+    await writeFile(dir, "target/config.toml", "# BEGIN LOCAL\nlocal = true\n");
+    const rules = [
+      {
+        name: "test config",
+        mode: "replace-file",
+        source: "source/config.toml",
+        target: "target/config.toml",
+        preserveBlocks: [{ start: "# BEGIN LOCAL", end: "# END LOCAL" }],
+      },
+    ] satisfies readonly ParentToolingSyncRule[];
+
+    await expectRejectsWithMessage(
+      async () => planParentToolingSync({ cwd: dir, rules }),
+      "preserved block markers must appear exactly once",
+    );
+  });
+
+  test("replace-file rules reject malformed JSON overlays", async () => {
+    const dir = makeTempDir();
+    await writeFile(dir, "source/settings.json", '{"hooks":{"PreToolUse":[]}}\n');
+    await writeFile(dir, "overlay/settings.json", "[1, 2]\n");
+    await writeFile(dir, "target/settings.json", '{"hooks":{"PreToolUse":[]}}\n');
+    const rules = [
+      {
+        name: "test settings",
+        mode: "replace-file",
+        source: "source/settings.json",
+        target: "target/settings.json",
+        jsonOverlays: ["overlay/settings.json"],
+      },
+    ] satisfies readonly ParentToolingSyncRule[];
+
+    await expectRejectsWithMessage(
+      async () => planParentToolingSync({ cwd: dir, rules }),
+      "overlay/settings.json: expected a JSON object",
+    );
   });
 
   test.if(canCreateSymlinks())("check mode rejects symlinked managed targets", async () => {

@@ -35,3 +35,16 @@ type = "command"
 command = 'bun .codex/hooks/stop-validate.ts'
 timeout = 240
 statusMessage = "Running Codex validation"
+
+# BEGIN KITSMITH INTERNAL HOOKS
+# Parent-only Codex hooks for this repository.
+# parent-tooling:sync preserves this block verbatim.
+[[hooks.PreToolUse]]
+matcher = "^(apply_patch|Edit|Write|MultiEdit)$"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = 'bun scripts/validation/guard-parent-tooling-target-edits.ts'
+timeout = 10
+statusMessage = "Checking parent tooling managed targets"
+# END KITSMITH INTERNAL HOOKS

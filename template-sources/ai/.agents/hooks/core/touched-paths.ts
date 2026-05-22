@@ -87,7 +87,7 @@ async function readTouchedPathFile(filePath: string): Promise<string[]> {
 export async function clearTouchedPaths(input: AgentHookEvent): Promise<void> {
   const sessionId = requireSessionId(input);
   await Promise.all(
-    touchedStatePaths(input, sessionId).map((filePath) => rm(filePath, { force: true })),
+    touchedStatePaths(input, sessionId).map(async (filePath) => rm(filePath, { force: true })),
   );
 }
 
@@ -117,11 +117,11 @@ async function pruneStaleTouchedStateForSession(
 
   await Promise.all(
     entries.map(async (entry) => {
-      if (!entry.isFile() || !entry.name.endsWith(".json")) {
-        return;
-      }
-
-      if (entry.name.startsWith(currentSessionPrefix)) {
+      if (
+        !entry.isFile() ||
+        !entry.name.endsWith(".json") ||
+        entry.name.startsWith(currentSessionPrefix)
+      ) {
         return;
       }
 

@@ -19,13 +19,13 @@
     "exactOptionalPropertyTypes": true,
     "noPropertyAccessFromIndexSignature": true,
     "allowUnreachableCode": false,
-    "allowUnusedLabels": false
+    "allowUnusedLabels": false,
   },
   "include": [
     "src/**/*.ts",
     "scripts/**/*.ts",
     ".agents/hooks/**/*.ts",
     ".codex/hooks/**/*.ts",
-    ".claude/hooks/**/*.ts"
-  ]
+    ".claude/hooks/**/*.ts",
+  ],
 }

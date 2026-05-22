@@ -43,16 +43,16 @@ When upgrading OXLint, TypeScript, or Bun, run `/antipattern-audit`.
 | Prefer nullish coalescing  | prefer-nullish-coalescing                            | warn  |
 | Cognitive complexity       | oxlint-plugin-complexity                             | warn  |
 
-### Bonforge rule families
+### Kitsmith rule families
 
-Bonforge uses OXLint categories as raw inputs, but product decisions are made by
-Bonforge families. A rule is `error` when it is a rail for agents: type safety,
+Kitsmith uses OXLint categories as raw inputs, but product decisions are made by
+Kitsmith families. A rule is `error` when it is a rail for agents: type safety,
 async safety, error propagation, import hygiene, frontend correctness, or a
 mechanical convention with low ambiguity. A rule stays `warn` when it is a
 refactor smell, style candidate, context-dependent performance hint, or likely to
 need human judgment.
 
-| Bonforge family        | Error rails                                                                                             | Warn candidates                                                                                     | Surfaces                    | Rationale                                       |
+| Kitsmith family        | Error rails                                                                                             | Warn candidates                                                                                     | Surfaces                    | Rationale                                       |
 | ---------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------- | ----------------------------------------------- |
 | Type safety            | no-explicit-any, no-unsafe-*, no-unsafe-type-assertion, no-unsafe-enum-comparison, no-redundant-types   | strict-boolean-expressions, restrict-plus-operands, no-unnecessary-condition                        | repo, scaffold base, frontend | Block unsafe flows; keep noisy inference rules as pressure. |
 | Async safety           | no-floating-promises, no-misused-promises, await-thenable, return-await                                 | promise-function-async, no-await-in-loop                                                            | repo, scaffold base, frontend | Block broken async; allow deliberate sequential IO. |

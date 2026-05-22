@@ -51,7 +51,7 @@
 		"scripts/AGENTS.md": {
 			"kind": "layer",
 			"sourcePath": ".claude/rules/scripts-layer.md",
-			"checksum": "sha256-646bd19206c3c0959075a855b67d173d062858b7b566dc09fd0a7b5dedae1227"
+			"checksum": "sha256-fec71a187f4aa26d150177599d9db9abc0afaf1a71ccda1b12536d3d2012844a"
 		},
 		"scripts/agents/AGENTS.md": {
 			"kind": "layer",
@@ -81,7 +81,7 @@
 		"src/AGENTS.md": {
 			"kind": "layer",
 			"sourcePath": ".claude/rules/scaffolder-source.md",
-			"checksum": "sha256-5e5c41afae881079920bf4f733df7b8eaeae753a7c439b7b758c51b92bdf91ac"
+			"checksum": "sha256-07dcaffa8256504dec36744e4aadd0a371c0c49337986e1f4e9f7674dc2a7999"
 		},
 		"template-sources/AGENTS.md": {
 			"kind": "layer",
@@ -102,7 +102,7 @@
 			"checksum": "sha256-1e40bfc2ba6c6b157df177433959bb7f2fb4bcc7383709aaeb94823eaea724df"
 		},
 		".claude/rules/antipattern-coverage.md": {
-			"checksum": "sha256-99ea835c3123b3700014ff424966d8e2cb62ce18d851dbfc7cd4d780936d5615"
+			"checksum": "sha256-981636d032814672094efb299499a668e9395be4933cd06ad0c9e6e0da11bf1f"
 		},
 		".claude/rules/generated-dependencies.md": {
 			"checksum": "sha256-a4b065e5f42977e2a2452d191318a37e9ba6dee07857d8fe9dba5834e9da1e1d"

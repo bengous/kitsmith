@@ -103,7 +103,7 @@ describe("format-and-lint workspace resolution", () => {
   test("live repo lints root code and agent hook surfaces", () => {
     expect(resolveWorkspace("src/index.ts")?.lint).toBe(true);
     expect(resolveWorkspace("scripts/validation/validate.ts")?.lint).toBe(true);
-    expect(resolveWorkspace(".agents/scripts/hooks/core/contract.ts")?.lint).toBe(true);
+    expect(resolveWorkspace(".agents/hooks/core/contract.ts")?.lint).toBe(true);
     expect(resolveWorkspace(".codex/hooks/lib.ts")?.lint).toBe(true);
     expect(resolveWorkspace(".claude/hooks/guard-destructive.ts")?.lint).toBe(true);
   });

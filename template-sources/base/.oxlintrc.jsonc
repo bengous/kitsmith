@@ -144,7 +144,7 @@
   "ignorePatterns": [
     "!src/**",
     "!scripts/**",
-    "!.agents/scripts/hooks/**",
+    "!.agents/hooks/**",
     "!.codex/hooks/**",
     "!.claude/hooks/**",
     "**/node_modules/**",

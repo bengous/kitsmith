@@ -137,7 +137,7 @@ export function classifyRoutingPath(
   }
   if (
     normalized.startsWith("scripts/") ||
-    normalized.startsWith(".agents/scripts/hooks/") ||
+    normalized.startsWith(".agents/hooks/") ||
     normalized.startsWith(".codex/hooks/") ||
     normalized.startsWith(".claude/hooks/")
   ) {
@@ -205,7 +205,7 @@ export function resolveQualityWorkspace(
   }
   if (
     normalized.startsWith("scripts/") ||
-    normalized.startsWith(".agents/scripts/hooks/") ||
+    normalized.startsWith(".agents/hooks/") ||
     normalized.startsWith(".claude/hooks/")
   ) {
     return ROOT_WORKSPACE;

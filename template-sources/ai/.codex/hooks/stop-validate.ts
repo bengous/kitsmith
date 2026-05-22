@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { codexAdapter } from "../../.agents/scripts/hooks/adapters/codex.ts";
-import { runStopHook } from "../../.agents/scripts/hooks/runtime/run-stop-hook.ts";
+import { codexAdapter } from "../../.agents/hooks/adapters/codex.ts";
+import { runStopHook } from "../../.agents/hooks/runtime/run-stop-hook.ts";
 
 await runStopHook(codexAdapter);

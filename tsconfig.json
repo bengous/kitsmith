@@ -24,7 +24,7 @@
   "include": [
     "src/**/*.ts",
     "scripts/**/*.ts",
-    ".agents/scripts/hooks/**/*.ts",
+    ".agents/hooks/**/*.ts",
     ".codex/hooks/**/*.ts",
     ".claude/hooks/**/*.ts"
   ]

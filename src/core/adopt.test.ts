@@ -310,8 +310,7 @@ describe("buildAdoptionPlan", () => {
 
     expect(
       plan.actions.some(
-        (action) =>
-          action.kind === "create" && action.path === ".agents/scripts/hooks/core/contract.ts",
+        (action) => action.kind === "create" && action.path === ".agents/hooks/core/contract.ts",
       ),
     ).toBe(true);
     expect(

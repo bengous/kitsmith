@@ -8,7 +8,7 @@
 | **Generated AGENTS File** | An `AGENTS.md` file generated for non-Claude agents from Claude-native sources. | Agent doc |
 | **Agent Manifest** | `.agents/agents-md-manifest.json`, the generated metadata used to detect AGENTS drift and stale outputs. | Manifest |
 | **Layer AGENTS File** | A generated `AGENTS.md` scoped to one directory based on Claude rule path frontmatter. | Directory instructions |
-| **Hook Runtime** | Shared TypeScript hook code under `.agents/scripts/hooks/` used by thin Claude and Codex wrappers. | Hook scripts |
+| **Hook Runtime** | Shared TypeScript hook code under `.agents/hooks/` used by thin Claude and Codex wrappers. | Hook scripts |
 | **Native Hook Wrapper** | A Claude or Codex hook file that delegates to the shared hook runtime. | Wrapper |
 
 ## Sync Terms

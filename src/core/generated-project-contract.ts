@@ -374,7 +374,7 @@ function finalizedFileSpecsForShape(shape: ProjectShape): GeneratedFileSpec[] {
   const specs: GeneratedFileSpec[] = [
     { owner: "finalize", relativePath: "AGENTS.md" },
     { owner: "finalize", relativePath: ".agents/agents-md-manifest.json" },
-    { owner: "finalize", relativePath: ".agents/scripts/hooks/AGENTS.md" },
+    { owner: "finalize", relativePath: ".agents/hooks/AGENTS.md" },
     { owner: "finalize", relativePath: ".codex/hooks/AGENTS.md" },
     { owner: "finalize", relativePath: ".claude/hooks/AGENTS.md" },
     { owner: "finalize", relativePath: "scripts/quality/AGENTS.md" },
@@ -427,7 +427,7 @@ function testCommandForContext(context: TemplateContext): string {
     ...(context.backend ? ["bun test ./src"] : []),
     ...(context.frontend === "tanstack" ? [commandInWorkspace("apps/frontend", "test")] : []),
     ...(context.ai
-      ? ["bun test ./.agents/scripts/hooks ./.codex/hooks ./.claude/hooks ./scripts/validation"]
+      ? ["bun test ./.agents/hooks ./.codex/hooks ./.claude/hooks ./scripts/validation"]
       : []),
   ].join(" && ");
 }
@@ -475,12 +475,12 @@ function rootToolingContractForContext(context: TemplateContext): RootToolingCon
   const lintPaths = [
     ...(context.backend ? ["src/"] : []),
     "scripts/",
-    ...(context.ai ? [".agents/scripts/hooks/", ".codex/hooks/", ".claude/hooks/"] : []),
+    ...(context.ai ? [".agents/hooks/", ".codex/hooks/", ".claude/hooks/"] : []),
   ];
   const archPaths = [
     ...(context.backend ? ["src"] : []),
     "scripts",
-    ...(context.ai ? ["./.agents/scripts/hooks", "./.codex/hooks", "./.claude/hooks"] : []),
+    ...(context.ai ? ["./.agents/hooks", "./.codex/hooks", "./.claude/hooks"] : []),
   ];
   const formatGlobs = [
     "'commitlint.config.js'",
@@ -488,7 +488,7 @@ function rootToolingContractForContext(context: TemplateContext): RootToolingCon
     "'scripts/**/*.{ts,tsx,js,jsx,mjs}'",
     ...(context.ai
       ? [
-          "'.agents/scripts/hooks/**/*.{ts,tsx,js,jsx,mjs}'",
+          "'.agents/hooks/**/*.{ts,tsx,js,jsx,mjs}'",
           "'.codex/hooks/**/*.{ts,tsx,js,jsx,mjs}'",
           "'.claude/hooks/**/*.{ts,tsx,js,jsx,mjs}'",
         ]
@@ -498,7 +498,7 @@ function rootToolingContractForContext(context: TemplateContext): RootToolingCon
     ...(context.backend ? ["src/**/*.ts"] : []),
     "scripts/**/*.ts",
     ...(context.ai
-      ? [".agents/scripts/hooks/**/*.ts", ".codex/hooks/**/*.ts", ".claude/hooks/**/*.ts"]
+      ? [".agents/hooks/**/*.ts", ".codex/hooks/**/*.ts", ".claude/hooks/**/*.ts"]
       : []),
   ];
   const knipRootEntry = [
@@ -513,21 +513,21 @@ function rootToolingContractForContext(context: TemplateContext): RootToolingCon
     "scripts/validation/validate-push.ts",
     "scripts/validation/shared/**/*.test.ts",
     ...(context.ai
-      ? [".agents/scripts/hooks/**/*.test.ts", ".claude/hooks/**/*.ts", ".codex/hooks/**/*.ts"]
+      ? [".agents/hooks/**/*.test.ts", ".claude/hooks/**/*.ts", ".codex/hooks/**/*.ts"]
       : []),
   ];
   const knipRootProject = [
     ...(context.backend ? ["src/**/*.ts"] : []),
     "scripts/**/*.ts",
     ...(context.ai
-      ? [".agents/scripts/hooks/**/*.ts", ".claude/hooks/**/*.ts", ".codex/hooks/**/*.ts"]
+      ? [".agents/hooks/**/*.ts", ".claude/hooks/**/*.ts", ".codex/hooks/**/*.ts"]
       : []),
   ];
   const lefthookRootGlobs = [
     "scripts/**/*.ts",
     ...(context.backend ? ["src/**/*.ts"] : []),
     ...(context.ai
-      ? [".agents/scripts/hooks/**/*.ts", ".codex/hooks/**/*.ts", ".claude/hooks/**/*.ts"]
+      ? [".agents/hooks/**/*.ts", ".codex/hooks/**/*.ts", ".claude/hooks/**/*.ts"]
       : []),
   ];
   const lefthookTypecheckGlobs = [

@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { codexAdapter } from "../../.agents/scripts/hooks/adapters/codex.ts";
-import { runDestructiveCommandGuard } from "../../.agents/scripts/hooks/runtime/run-pre-tool-hook.ts";
+import { codexAdapter } from "../../.agents/hooks/adapters/codex.ts";
+import { runDestructiveCommandGuard } from "../../.agents/hooks/runtime/run-pre-tool-hook.ts";
 
 await runDestructiveCommandGuard(codexAdapter);

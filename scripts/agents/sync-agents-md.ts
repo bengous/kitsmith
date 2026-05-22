@@ -92,7 +92,7 @@ const ROOT_MD = "CLAUDE.md";
 const ROOT_AGENTS_MD = "AGENTS.md";
 const MANIFEST_PATH = ".agents/agents-md-manifest.json";
 const MANAGED_AGENTS_GLOBS = [
-  ".agents/scripts/hooks/AGENTS.md",
+  ".agents/hooks/AGENTS.md",
   ".codex/hooks/AGENTS.md",
   ".claude/hooks/AGENTS.md",
   "apps/*/AGENTS.md",

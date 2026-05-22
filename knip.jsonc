@@ -35,7 +35,7 @@
     "template-sources/base/scripts/validation/validate-push.ts",
     "template-sources/base/scripts/validation/validate.ts",
     "template-sources/frontend-tanstack/apps/frontend/.dependency-cruiser.cjs",
-    "template-sources/ai/.agents/scripts/hooks/**/*.ts",
+    "template-sources/ai/.agents/hooks/**/*.ts",
     "template-sources/ai/scripts/validation/shared/quality-workspace.ts",
     "template-sources/ai/scripts/validation/shared/repo-path.ts",
     "template-sources/ai/.codex/hooks/guard-destructive.ts",
@@ -51,7 +51,7 @@
   "project": [
     "src/**/*.{ts,tsx,js,jsx,mjs,cjs}",
     "scripts/**/*.{ts,tsx,js,jsx,mjs,cjs}",
-    ".agents/scripts/hooks/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    ".agents/hooks/**/*.{ts,tsx,js,jsx,mjs,cjs}",
     ".codex/hooks/**/*.{ts,tsx,js,jsx,mjs,cjs}",
     ".claude/hooks/**/*.{ts,tsx,js,jsx,mjs,cjs}",
     "template-sources/**/*.{ts,tsx,js,jsx,mjs,cjs}",

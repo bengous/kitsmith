@@ -1,7 +1,7 @@
 {
 	"version": 2,
 	"generated": [
-		".agents/scripts/hooks/AGENTS.md",
+		".agents/hooks/AGENTS.md",
 		".claude/hooks/AGENTS.md",
 		".claude/rules/AGENTS.md",
 		".codex/hooks/AGENTS.md",
@@ -18,10 +18,10 @@
 		"templates/AGENTS.md"
 	],
 	"outputs": {
-		".agents/scripts/hooks/AGENTS.md": {
+		".agents/hooks/AGENTS.md": {
 			"kind": "layer",
 			"sourcePath": ".claude/rules/agent-hook-runtime.md",
-			"checksum": "sha256-cf809ad836065f617e2dc730abd297092155694cad84a61cdfdfef6f8fa5913e"
+			"checksum": "sha256-c71fbaf148493e754014782d1a06e1292542304aef620ea20e6e8e163642bbf9"
 		},
 		".claude/hooks/AGENTS.md": {
 			"kind": "layer",
@@ -96,7 +96,7 @@
 	},
 	"sources": {
 		".claude/rules/agent-hook-runtime.md": {
-			"checksum": "sha256-c7ca1f0e029b9d3a127f45736fa1d03d9fad3b6bb6a0dbf62a34799d4b59c99e"
+			"checksum": "sha256-f8d3fa3a90de44745c00731937e08f6750c1758b43e092838fa20338308eace1"
 		},
 		".claude/rules/agents-sync-script.md": {
 			"checksum": "sha256-1e40bfc2ba6c6b157df177433959bb7f2fb4bcc7383709aaeb94823eaea724df"

@@ -1,16 +1,8 @@
 #!/usr/bin/env bun
 
 import type { AgentAdapter, AgentHookEvent } from "../../.agents/hooks/core/contract.ts";
-import {
-  claudeAdapter,
-  parseClaudeHookInput,
-  printClaudePreToolUseDeny,
-} from "../../.agents/hooks/adapters/claude.ts";
-import {
-  codexAdapter,
-  parseCodexHookInput,
-  printCodexPreToolUseDeny,
-} from "../../.agents/hooks/adapters/codex.ts";
+import { claudeAdapter, parseClaudeHookInput } from "../../.agents/hooks/adapters/claude.ts";
+import { codexAdapter, parseCodexHookInput } from "../../.agents/hooks/adapters/codex.ts";
 import { repoRoot } from "../../.agents/hooks/core/command-runner.ts";
 import { extractTouchedPaths } from "../../.agents/hooks/core/touched-paths.ts";
 import { printHookFailure } from "../../.agents/hooks/runtime/hook-errors.ts";
@@ -22,7 +14,6 @@ import {
 type ParsedPreToolHook = {
   readonly adapter: AgentAdapter;
   readonly event: AgentHookEvent;
-  readonly printDeny: (reason: string) => void;
 };
 
 export function blockedParentToolingTargetPaths(paths: readonly string[]): string[] {
@@ -68,14 +59,12 @@ function parsePreToolHookInput(value: unknown): ParsedPreToolHook {
     return {
       adapter: claudeAdapter,
       event: parseClaudeHookInput(value, "pre-tool"),
-      printDeny: printClaudePreToolUseDeny,
     };
   }
 
   return {
     adapter: codexAdapter,
     event: parseCodexHookInput(value, "pre-tool"),
-    printDeny: printCodexPreToolUseDeny,
   };
 }
 
@@ -93,7 +82,7 @@ async function main(): Promise<void> {
     const root = repoRoot(event.cwd);
     const reason = parentToolingTargetEditBlockReason(extractTouchedPaths(event, root));
     if (reason !== undefined) {
-      parsed.printDeny(reason);
+      parsed.adapter.printPreToolDeny(reason);
     }
   } catch (error) {
     printHookFailure(adapter, "pre-tool", error);

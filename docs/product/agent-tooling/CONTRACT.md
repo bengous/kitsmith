@@ -12,9 +12,11 @@ agent tooling and Kitsmith parent repo tooling sync.
 - Generated agent files and manifest: `AGENTS.md`, nested `AGENTS.md` files, and
   `.agents/agents-md-manifest.json`.
 - Agent sync/check: `scripts/agents/sync-agents-md.ts`.
-- Hook runtime and wrappers: `.agents/hooks/`, `.codex/hooks/`, `.claude/hooks/`.
+- Hook runtime source and wrappers: `template-sources/ai/.agents/hooks/`, `.agents/hooks/`,
+  `.codex/hooks/`, `.claude/hooks/`.
 - Generated AI sources: `template-sources/ai/`.
-- Parent sync: `scripts/sync/parent-tooling.ts`.
+- Parent sync and parent-only overlays: `scripts/sync/parent-tooling.ts` and
+  `scripts/sync/parent-tooling/`.
 - Generated project contract assertions: `src/core/project-contract.test.ts`.
 
 ## Invariants
@@ -60,13 +62,34 @@ agent tooling and Kitsmith parent repo tooling sync.
    Evidence: generated project contract assertions for `.codex/hooks/*`, `.claude/hooks/*`, and
    `.agents/hooks/*`.
 
-9. Parent tooling sync replaces or merges only explicitly listed managed paths and refuses symlinked
-   managed paths.
+9. Hook runtime touched-path state is session-scoped. Stop validation requires `session_id`, reads
+   only the current session's touched paths, and must not clear another agent session's state.
+
+   Evidence: `requireSessionId` in `.agents/hooks/core/session.ts`, state identity helpers in
+   `.agents/hooks/core/touched-paths.ts`, `runStopValidation`, and generated-project contract
+   coverage for isolated Stop sessions.
+
+10. Parent tooling sync replaces, merges, or overlays only explicitly listed managed paths and
+    refuses symlinked managed paths.
 
    Evidence: `PARENT_TOOLING_SYNC_RULES`, `planParentToolingSync`,
    `assertManagedPathIsNotSymlink`, and `applyParentToolingSync`.
 
-10. Kitsmith parent self-adoption is rejected; parent tooling sync is the supported maintenance path.
+11. Parent-only hook configuration is explicit and must not leak into generated projects. Codex
+    parent-only hooks live in a preserved `.codex/config.toml` block; Claude parent-only hooks are
+    derived from `template-sources/ai/.claude/settings.json` plus
+    `scripts/sync/parent-tooling/claude-settings.overlay.json`.
+
+    Evidence: `PARENT_TOOLING_SYNC_RULES`, `.codex/config.toml`, and
+    `scripts/sync/parent-tooling/claude-settings.overlay.json`.
+
+12. Parent tooling managed targets must not be edited directly when a declared source or overlay
+    exists.
+
+    Evidence: `scripts/validation/guard-parent-tooling-target-edits.ts` and the parent-only
+    PreToolUse hooks in `.codex/config.toml` and `.claude/settings.json`.
+
+13. Kitsmith parent self-adoption is rejected; parent tooling sync is the supported maintenance path.
 
     Evidence: `assertNotKitsmithParentSelfAdoption` in `src/core/adopt.ts`.
 

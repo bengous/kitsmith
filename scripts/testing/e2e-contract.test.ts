@@ -9,10 +9,10 @@ import {
 } from "./e2e-contract.ts";
 
 const paths = {
-  repoRoot: "/home/b3ngous/projects/kitsmith",
-  bunBinary: "/home/b3ngous/.bun/bin/bun",
+  repoRoot: "/home/test-user/projects/kitsmith",
+  bunBinary: "/home/test-user/.bun/bin/bun",
   hostSandboxRoot: "/tmp/kitsmith-e2e-contract",
-  hostHome: "/home/b3ngous",
+  hostHome: "/home/test-user",
 };
 
 describe("e2eContractScenariosFromArgv", () => {
@@ -110,7 +110,7 @@ describe("buildE2eContractSandboxCommand", () => {
     const command = buildE2eContractSandboxCommand(paths, "tanstack-ai");
     const commandText = command.join(" ");
 
-    expect(commandText).toContain("--ro-bind /home/b3ngous/projects/kitsmith");
+    expect(commandText).toContain("--ro-bind /home/test-user/projects/kitsmith");
     expect(commandText).toContain("env -i");
     expect(commandText).toContain("e2e-contract-scenario.ts");
     expect(commandText).toContain("--scenario 'tanstack-ai'");

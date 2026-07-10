@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 
 import { cp, mkdtemp } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { runCommand } from "./run-command.ts";
 
-const DEFAULT_VEX_SOURCE = "/home/b3ngous/projects/vex";
+const DEFAULT_VEX_SOURCE = join(homedir(), "projects", "vex");
 
 function argValue(flag: string): string | undefined {
   const index = process.argv.indexOf(flag);

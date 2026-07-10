@@ -8,10 +8,10 @@ import {
 } from "./sandbox-runner.ts";
 
 const paths = {
-  repoRoot: "/home/b3ngous/projects/kitsmith",
-  bunBinary: "/home/b3ngous/.bun/bin/bun",
+  repoRoot: "/home/test-user/projects/kitsmith",
+  bunBinary: "/home/test-user/.bun/bin/bun",
   hostSandboxRoot: "/tmp/kitsmith-sandbox-test",
-  hostHome: "/home/b3ngous",
+  hostHome: "/home/test-user",
 };
 
 describe("sandboxTimeoutMs", () => {
@@ -51,7 +51,7 @@ describe("buildSandboxEnv", () => {
   });
 
   test("rejects overrides for strict sandbox env keys", () => {
-    expect(() => buildSandboxEnv(paths.bunBinary, { HOME: "/home/b3ngous" })).toThrow(
+    expect(() => buildSandboxEnv(paths.bunBinary, { HOME: "/home/test-user" })).toThrow(
       "Sandbox env override is not allowed for HOME",
     );
   });
@@ -59,15 +59,19 @@ describe("buildSandboxEnv", () => {
 
 describe("hostHomeFromEnv", () => {
   test("requires an absolute host home path", () => {
-    expect(hostHomeFromEnv({ HOME: "/home/b3ngous" })).toBe("/home/b3ngous");
+    expect(hostHomeFromEnv({ HOME: "/home/test-user" })).toBe("/home/test-user");
     expect(() => hostHomeFromEnv({ HOME: "relative" })).toThrow("absolute HOME path");
   });
 });
 
 describe("hostSecretAbsenceChecks", () => {
   test("builds checks for host credential paths", () => {
-    expect(hostSecretAbsenceChecks("/home/b3ngous")).toContain("test ! -e '/home/b3ngous/.npmrc'");
-    expect(hostSecretAbsenceChecks("/home/b3ngous")).toContain("test ! -d '/home/b3ngous/.ssh'");
+    expect(hostSecretAbsenceChecks("/home/test-user")).toContain(
+      "test ! -e '/home/test-user/.npmrc'",
+    );
+    expect(hostSecretAbsenceChecks("/home/test-user")).toContain(
+      "test ! -d '/home/test-user/.ssh'",
+    );
   });
 });
 
@@ -88,8 +92,8 @@ describe("buildSandboxCommand", () => {
     expect(commandText).not.toContain("NPM_TOKEN");
     expect(commandText).not.toContain("GITHUB_TOKEN");
     expect(commandText).not.toContain("SSH_AUTH_SOCK");
-    expect(commandText).not.toContain("HOME=/home/b3ngous");
-    expect(commandText).toContain("--ro-bind /home/b3ngous/projects/kitsmith");
+    expect(commandText).not.toContain("HOME=/home/test-user");
+    expect(commandText).toContain("--ro-bind /home/test-user/projects/kitsmith");
   });
 
   test("supports writable work mounts and no-network mode", () => {

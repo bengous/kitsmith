@@ -7,10 +7,10 @@ import {
 } from "./tarball-smoke-sandbox.ts";
 
 const paths = {
-  repoRoot: "/home/b3ngous/projects/kitsmith",
-  bunBinary: "/home/b3ngous/.bun/bin/bun",
+  repoRoot: "/home/test-user/projects/kitsmith",
+  bunBinary: "/home/test-user/.bun/bin/bun",
   hostSandboxRoot: "/tmp/kitsmith-tarball-smoke",
-  hostHome: "/home/b3ngous",
+  hostHome: "/home/test-user",
 };
 
 describe("tarballSmokeOptionsFromArgv", () => {

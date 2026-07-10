@@ -8,10 +8,10 @@ import {
 } from "./smoke.ts";
 
 const paths = {
-  repoRoot: "/home/b3ngous/projects/kitsmith",
-  bunBinary: "/home/b3ngous/.bun/bin/bun",
+  repoRoot: "/home/test-user/projects/kitsmith",
+  bunBinary: "/home/test-user/.bun/bin/bun",
   hostSandboxRoot: "/tmp/kitsmith-smoke",
-  hostHome: "/home/b3ngous",
+  hostHome: "/home/test-user",
 };
 
 describe("smokeScenariosFromArgv", () => {
@@ -81,7 +81,7 @@ describe("buildSmokeSandboxCommand", () => {
     );
     const commandText = command.join(" ");
 
-    expect(commandText).toContain("--ro-bind /home/b3ngous/projects/kitsmith");
+    expect(commandText).toContain("--ro-bind /home/test-user/projects/kitsmith");
     expect(commandText).toContain("env -i");
     expect(commandText).toContain("bun install");
     expect(commandText).toContain("supply-chain-probe.ts");

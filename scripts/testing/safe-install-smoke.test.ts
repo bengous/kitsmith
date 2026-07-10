@@ -9,10 +9,10 @@ import { SCAFFOLD_SCENARIO_CONFIG } from "./scenarios.ts";
 function tanStackAiSafeInstallCommandText(): string {
   return buildSafeInstallSandboxCommand(
     {
-      repoRoot: "/home/b3ngous/projects/kitsmith",
-      bunBinary: "/home/b3ngous/.bun/bin/bun",
+      repoRoot: "/home/test-user/projects/kitsmith",
+      bunBinary: "/home/test-user/.bun/bin/bun",
       hostSandboxRoot: "/tmp/kitsmith-safe-install-test",
-      hostHome: "/home/b3ngous",
+      hostHome: "/home/test-user",
     },
     "tanstack-ai",
     SCAFFOLD_SCENARIO_CONFIG["tanstack-ai"],
@@ -54,15 +54,15 @@ describe("buildSafeInstallSandboxCommand", () => {
 
     expect(commandText).toContain("bwrap");
     expect(commandText).toContain(" -i ");
-    expect(commandText).toContain("/home/b3ngous/projects/kitsmith");
-    expect(commandText).toContain("/home/b3ngous/.bun/bin/bun");
+    expect(commandText).toContain("/home/test-user/projects/kitsmith");
+    expect(commandText).toContain("/home/test-user/.bun/bin/bun");
     expect(commandText).toContain("--git-init true");
     expect(commandText).not.toContain("--git-init false");
     expect(commandText).toContain("bun run check");
     expect(commandText).not.toContain("bun run typecheck");
-    expect(commandText).toContain("test ! -e '/home/b3ngous/.npmrc'");
-    expect(commandText).not.toContain("--ro-bind /home/b3ngous/.npmrc");
-    expect(commandText).not.toContain("--ro-bind /home/b3ngous/.ssh");
+    expect(commandText).toContain("test ! -e '/home/test-user/.npmrc'");
+    expect(commandText).not.toContain("--ro-bind /home/test-user/.npmrc");
+    expect(commandText).not.toContain("--ro-bind /home/test-user/.ssh");
   });
 
   test("runs the supply-chain probe inside the sandbox after installing", () => {

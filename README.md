@@ -4,6 +4,10 @@
   <img src="./assets/brand/kitsmith-logo-full-640.png" alt="kitsmith logo: a fused K code mark with wordmark" width="360" />
 </p>
 
+> **Archived.** This project is archived and no longer maintained. npm versions
+> 0.1.0–0.4.3 remain installable but deprecated. The agent-hooks/quality-tooling
+> layer lives on in [runweaver](https://github.com/bengous/runweaver).
+
 An opinionated Bun-first project generator for people who code with AI agents and want stronger guardrails from the first commit.
 
 It will not eliminate AI slop. No scaffold can. What it can do is catch obvious bugs earlier, enforce a shared set of conventions, and give agents a project shape that is harder to damage by accident.

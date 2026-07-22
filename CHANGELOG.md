@@ -1,5 +1,10 @@
 # Changelog
 
+## Archived - 2026-07-22
+
+This repository is archived. Version 0.4.4 was prepared but never published to
+npm. It is superseded by runweaver for agent tooling.
+
 ## 0.4.4 - 2026-05-22
 
 ### Changed

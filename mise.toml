@@ -10,5 +10,5 @@ zizmor = "1.25.2"
 [env]
 _.path = ["{{config_root}}/node_modules/.bin"]
 
-[prepare.bun]
+[deps.bun]
 auto = true
